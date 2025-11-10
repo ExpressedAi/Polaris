@@ -1,8 +1,8 @@
 
-import { Message, Thread, JITSnippet, JournalEntry, AgendaItem, CalendarEvent, PomodoroSession, BrandRecord, ClientRecord, PeopleRecord, ConceptRecord, XPEvent, Deliverable, AgendaSession, PostMortem, GoalRecord, VendorTask } from '../types';
+import { Message, Thread, JITSnippet, JournalEntry, AgendaItem, CalendarEvent, PomodoroSession, BrandRecord, ClientRecord, PeopleRecord, ConceptRecord, XPEvent, Deliverable, AgendaSession, PostMortem, GoalRecord, VendorTask, TwitterAccount, TwitterDraft, TwitterScheduledPost, TwitterAnalytics, TwitterList, TwitterDM, TwitterHashtagTracker, TwitterMention, TwitterThread, TwitterMetrics } from '../types';
 
 const DB_NAME = 'ChatPlatformDB';
-const DB_VERSION = 6;
+const DB_VERSION = 7; // Incremented for Twitter stores
 const THREADS_STORE = 'threads';
 const MESSAGES_STORE = 'messages';
 const SETTINGS_STORE = 'settings';
@@ -21,6 +21,16 @@ const SESSION_STORE = 'agenda_sessions';
 const POST_MORTEM_STORE = 'post_mortems';
 const GOAL_STORE = 'goal_records';
 const VENDOR_TASK_STORE = 'vendor_tasks';
+const TWITTER_ACCOUNT_STORE = 'twitter_accounts';
+const TWITTER_DRAFT_STORE = 'twitter_drafts';
+const TWITTER_SCHEDULED_STORE = 'twitter_scheduled_posts';
+const TWITTER_ANALYTICS_STORE = 'twitter_analytics';
+const TWITTER_LIST_STORE = 'twitter_lists';
+const TWITTER_DM_STORE = 'twitter_dms';
+const TWITTER_HASHTAG_STORE = 'twitter_hashtag_trackers';
+const TWITTER_MENTION_STORE = 'twitter_mentions';
+const TWITTER_THREAD_STORE = 'twitter_threads';
+const TWITTER_METRICS_STORE = 'twitter_metrics';
 
 let db: IDBDatabase | null = null;
 
@@ -85,6 +95,16 @@ export async function initDB(): Promise<IDBDatabase> {
       ensureStore(POST_MORTEM_STORE);
       ensureStore(GOAL_STORE);
       ensureStore(VENDOR_TASK_STORE);
+      ensureStore(TWITTER_ACCOUNT_STORE);
+      ensureStore(TWITTER_DRAFT_STORE);
+      ensureStore(TWITTER_SCHEDULED_STORE);
+      ensureStore(TWITTER_ANALYTICS_STORE);
+      ensureStore(TWITTER_LIST_STORE);
+      ensureStore(TWITTER_DM_STORE);
+      ensureStore(TWITTER_HASHTAG_STORE);
+      ensureStore(TWITTER_MENTION_STORE);
+      ensureStore(TWITTER_THREAD_STORE);
+      ensureStore(TWITTER_METRICS_STORE);
     };
   });
 }
@@ -270,7 +290,7 @@ export async function getRecentSnippets(limit = 5): Promise<JITSnippet[]> {
 
 // ---------- Generic entity helpers ----------
 
-type EntityRecord = JournalEntry | AgendaItem | CalendarEvent | PomodoroSession | BrandRecord | ClientRecord | PeopleRecord | ConceptRecord | Deliverable | AgendaSession | PostMortem | GoalRecord | VendorTask;
+type EntityRecord = JournalEntry | AgendaItem | CalendarEvent | PomodoroSession | BrandRecord | ClientRecord | PeopleRecord | ConceptRecord | Deliverable | AgendaSession | PostMortem | GoalRecord | VendorTask | TwitterAccount | TwitterDraft | TwitterScheduledPost | TwitterAnalytics | TwitterList | TwitterDM | TwitterHashtagTracker | TwitterMention | TwitterThread | TwitterMetrics;
 
 const storeMap: Record<string, string> = {
   journal: JOURNAL_STORE,
@@ -286,6 +306,16 @@ const storeMap: Record<string, string> = {
   postMortem: POST_MORTEM_STORE,
   goal: GOAL_STORE,
   vendorTask: VENDOR_TASK_STORE,
+  twitterAccount: TWITTER_ACCOUNT_STORE,
+  twitterDraft: TWITTER_DRAFT_STORE,
+  twitterScheduled: TWITTER_SCHEDULED_STORE,
+  twitterAnalytics: TWITTER_ANALYTICS_STORE,
+  twitterList: TWITTER_LIST_STORE,
+  twitterDM: TWITTER_DM_STORE,
+  twitterHashtag: TWITTER_HASHTAG_STORE,
+  twitterMention: TWITTER_MENTION_STORE,
+  twitterThread: TWITTER_THREAD_STORE,
+  twitterMetrics: TWITTER_METRICS_STORE,
 };
 
 async function saveRecord(storeName: string, record: EntityRecord): Promise<void> {
@@ -372,6 +402,37 @@ export const entityStorage = {
   saveVendorTask: (task: VendorTask) => saveRecord(VENDOR_TASK_STORE, task),
   getVendorTasks: () => getAllRecords<VendorTask>(VENDOR_TASK_STORE),
   deleteVendorTask: (id: string) => deleteRecord(VENDOR_TASK_STORE, id),
+  // Twitter storage methods
+  saveTwitterAccount: (account: TwitterAccount) => saveRecord(TWITTER_ACCOUNT_STORE, account),
+  getTwitterAccounts: () => getAllRecords<TwitterAccount>(TWITTER_ACCOUNT_STORE),
+  deleteTwitterAccount: (id: string) => deleteRecord(TWITTER_ACCOUNT_STORE, id),
+  saveTwitterDraft: (draft: TwitterDraft) => saveRecord(TWITTER_DRAFT_STORE, draft),
+  getTwitterDrafts: () => getAllRecords<TwitterDraft>(TWITTER_DRAFT_STORE),
+  deleteTwitterDraft: (id: string) => deleteRecord(TWITTER_DRAFT_STORE, id),
+  saveTwitterScheduledPost: (post: TwitterScheduledPost) => saveRecord(TWITTER_SCHEDULED_STORE, post),
+  getTwitterScheduledPosts: () => getAllRecords<TwitterScheduledPost>(TWITTER_SCHEDULED_STORE),
+  deleteTwitterScheduledPost: (id: string) => deleteRecord(TWITTER_SCHEDULED_STORE, id),
+  saveTwitterAnalytics: (analytics: TwitterAnalytics) => saveRecord(TWITTER_ANALYTICS_STORE, analytics),
+  getTwitterAnalytics: () => getAllRecords<TwitterAnalytics>(TWITTER_ANALYTICS_STORE),
+  deleteTwitterAnalytics: (id: string) => deleteRecord(TWITTER_ANALYTICS_STORE, id),
+  saveTwitterList: (list: TwitterList) => saveRecord(TWITTER_LIST_STORE, list),
+  getTwitterLists: () => getAllRecords<TwitterList>(TWITTER_LIST_STORE),
+  deleteTwitterList: (id: string) => deleteRecord(TWITTER_LIST_STORE, id),
+  saveTwitterDM: (dm: TwitterDM) => saveRecord(TWITTER_DM_STORE, dm),
+  getTwitterDMs: () => getAllRecords<TwitterDM>(TWITTER_DM_STORE),
+  deleteTwitterDM: (id: string) => deleteRecord(TWITTER_DM_STORE, id),
+  saveTwitterHashtagTracker: (tracker: TwitterHashtagTracker) => saveRecord(TWITTER_HASHTAG_STORE, tracker),
+  getTwitterHashtagTrackers: () => getAllRecords<TwitterHashtagTracker>(TWITTER_HASHTAG_STORE),
+  deleteTwitterHashtagTracker: (id: string) => deleteRecord(TWITTER_HASHTAG_STORE, id),
+  saveTwitterMention: (mention: TwitterMention) => saveRecord(TWITTER_MENTION_STORE, mention),
+  getTwitterMentions: () => getAllRecords<TwitterMention>(TWITTER_MENTION_STORE),
+  deleteTwitterMention: (id: string) => deleteRecord(TWITTER_MENTION_STORE, id),
+  saveTwitterThread: (thread: TwitterThread) => saveRecord(TWITTER_THREAD_STORE, thread),
+  getTwitterThreads: () => getAllRecords<TwitterThread>(TWITTER_THREAD_STORE),
+  deleteTwitterThread: (id: string) => deleteRecord(TWITTER_THREAD_STORE, id),
+  saveTwitterMetrics: (metrics: TwitterMetrics) => saveRecord(TWITTER_METRICS_STORE, metrics),
+  getTwitterMetrics: () => getAllRecords<TwitterMetrics>(TWITTER_METRICS_STORE),
+  deleteTwitterMetrics: (id: string) => deleteRecord(TWITTER_METRICS_STORE, id),
 };
 
 /**
@@ -397,6 +458,16 @@ export async function clearAllData(includeSettings: boolean = false): Promise<vo
     POST_MORTEM_STORE,
     GOAL_STORE,
     VENDOR_TASK_STORE,
+    TWITTER_ACCOUNT_STORE,
+    TWITTER_DRAFT_STORE,
+    TWITTER_SCHEDULED_STORE,
+    TWITTER_ANALYTICS_STORE,
+    TWITTER_LIST_STORE,
+    TWITTER_DM_STORE,
+    TWITTER_HASHTAG_STORE,
+    TWITTER_MENTION_STORE,
+    TWITTER_THREAD_STORE,
+    TWITTER_METRICS_STORE,
   ];
 
   if (includeSettings) {

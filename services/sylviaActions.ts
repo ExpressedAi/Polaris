@@ -4,7 +4,7 @@ import { emitEntityUpdate } from './entityEvents';
 import { logSylviaEvent } from './sylviaLog';
 import { awardExperience } from './experience';
 import { logContext } from './contextLog';
-import { PeopleRecord, GoalRecord, VendorTask } from '../types';
+import { PeopleRecord, GoalRecord, VendorTask, TwitterAccount, TwitterDraft, TwitterScheduledPost, TwitterAnalytics, TwitterList, TwitterHashtagTracker, TwitterMention, TwitterThread, TwitterMetrics } from '../types';
 
 let initialized = false;
 let unregisterAll: (() => void)[] = [];
@@ -365,6 +365,259 @@ const registerVendorTaskAction = () =>
     },
   });
 
+// Twitter/X Actions
+const registerTwitterAccountAction = () =>
+  registerAction({
+    id: 'twitter.account.connect',
+    label: 'Connect Twitter account',
+    handler: async (payload = '') => {
+      // Format: username|displayName|apiKey|apiSecret|accessToken|accessTokenSecret|bearerToken
+      const parts = payload.split('|');
+      const account: TwitterAccount = {
+        id: `twitter-account-${Date.now()}`,
+        username: parts[0]?.trim() || '',
+        displayName: parts[1]?.trim() || '',
+        isConnected: true,
+        apiKey: parts[2]?.trim() || undefined,
+        apiSecret: parts[3]?.trim() || undefined,
+        accessToken: parts[4]?.trim() || undefined,
+        accessTokenSecret: parts[5]?.trim() || undefined,
+        bearerToken: parts[6]?.trim() || undefined,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterAccount(account);
+      emitEntityUpdate('twitterAccount');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Connected Twitter account: @${account.username}`,
+        detail: account.displayName,
+      });
+    },
+  });
+
+const registerTwitterDraftAction = () =>
+  registerAction({
+    id: 'twitter.draft.create',
+    label: 'Create Twitter draft',
+    handler: async (payload = '') => {
+      // Format: content|isThread|tags|threadTweets (pipe-separated for tweets if thread)
+      const parts = payload.split('||');
+      const [contentAndMeta, ...threadTweets] = parts;
+      const [content, isThread, tags] = contentAndMeta.split('|');
+
+      const draft: TwitterDraft = {
+        id: `twitter-draft-${Date.now()}`,
+        content: content?.trim() || '',
+        isThread: isThread?.trim().toLowerCase() === 'true',
+        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+        threadTweets: threadTweets.length > 0 ? threadTweets.map(t => t.trim()).filter(Boolean) : undefined,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterDraft(draft);
+      emitEntityUpdate('twitterDraft');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Twitter draft created${draft.isThread ? ' (Thread)' : ''}`,
+        detail: draft.content.substring(0, 100),
+      });
+    },
+  });
+
+const registerTwitterScheduleAction = () =>
+  registerAction({
+    id: 'twitter.schedule.create',
+    label: 'Schedule Twitter post',
+    handler: async (payload = '') => {
+      // Format: content|scheduledAt|tags|isThread|threadTweets
+      const parts = payload.split('||');
+      const [contentAndMeta, ...threadTweets] = parts;
+      const [content, scheduledAt, tags, isThread] = contentAndMeta.split('|');
+
+      const post: TwitterScheduledPost = {
+        id: `twitter-scheduled-${Date.now()}`,
+        content: content?.trim() || '',
+        scheduledAt: toUnix(scheduledAt) || Date.now() + 3600000, // Default 1 hour from now
+        status: 'pending',
+        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+        threadTweets: threadTweets.length > 0 && isThread?.trim().toLowerCase() === 'true'
+          ? threadTweets.map(t => t.trim()).filter(Boolean)
+          : undefined,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterScheduledPost(post);
+      emitEntityUpdate('twitterScheduled');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Scheduled tweet for ${new Date(post.scheduledAt).toLocaleString()}`,
+        detail: post.content.substring(0, 100),
+      });
+    },
+  });
+
+const registerTwitterAnalyticsAction = () =>
+  registerAction({
+    id: 'twitter.analytics.log',
+    label: 'Log Twitter analytics',
+    handler: async (payload = '') => {
+      // Format: tweetId|impressions|engagements|likes|retweets|replies|permalink
+      const parts = payload.split('|');
+      const analytics: TwitterAnalytics = {
+        id: `twitter-analytics-${Date.now()}`,
+        tweetId: parts[0]?.trim() || '',
+        impressions: parseInt(parts[1]?.trim() || '0') || undefined,
+        engagements: parseInt(parts[2]?.trim() || '0') || undefined,
+        likes: parseInt(parts[3]?.trim() || '0') || undefined,
+        retweets: parseInt(parts[4]?.trim() || '0') || undefined,
+        replies: parseInt(parts[5]?.trim() || '0') || undefined,
+        permalink: parts[6]?.trim() || undefined,
+        fetchedAt: Date.now(),
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterAnalytics(analytics);
+      emitEntityUpdate('twitterAnalytics');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Analytics logged for tweet ${analytics.tweetId}`,
+        detail: `${analytics.impressions} impressions, ${analytics.engagements} engagements`,
+      });
+    },
+  });
+
+const registerTwitterListAction = () =>
+  registerAction({
+    id: 'twitter.list.add',
+    label: 'Add Twitter list',
+    handler: async (payload = '') => {
+      // Format: listId|name|description|memberCount|subscriberCount|isPrivate
+      const parts = payload.split('|');
+      const list: TwitterList = {
+        id: `twitter-list-${Date.now()}`,
+        listId: parts[0]?.trim() || '',
+        name: parts[1]?.trim() || 'Untitled List',
+        description: parts[2]?.trim() || undefined,
+        memberCount: parseInt(parts[3]?.trim() || '0') || undefined,
+        subscriberCount: parseInt(parts[4]?.trim() || '0') || undefined,
+        isPrivate: parts[5]?.trim().toLowerCase() === 'true',
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterList(list);
+      emitEntityUpdate('twitterList');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Twitter list added: ${list.name}`,
+        detail: list.description,
+      });
+    },
+  });
+
+const registerTwitterHashtagAction = () =>
+  registerAction({
+    id: 'twitter.hashtag.track',
+    label: 'Track Twitter hashtag',
+    handler: async (payload = '') => {
+      // Format: hashtag|notes
+      const parts = payload.split('|');
+      const tracker: TwitterHashtagTracker = {
+        id: `twitter-hashtag-${Date.now()}`,
+        hashtag: parts[0]?.trim().replace(/^#/, '') || '',
+        isActive: true,
+        trackingStartedAt: Date.now(),
+        notes: parts[1]?.trim() || undefined,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterHashtagTracker(tracker);
+      emitEntityUpdate('twitterHashtag');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Tracking hashtag: #${tracker.hashtag}`,
+        detail: tracker.notes,
+      });
+    },
+  });
+
+const registerTwitterMentionAction = () =>
+  registerAction({
+    id: 'twitter.mention.log',
+    label: 'Log Twitter mention',
+    handler: async (payload = '') => {
+      // Format: tweetId|authorUsername|authorDisplayName|content|permalink
+      const parts = payload.split('|');
+      const mention: TwitterMention = {
+        id: `twitter-mention-${Date.now()}`,
+        tweetId: parts[0]?.trim() || '',
+        authorUsername: parts[1]?.trim() || '',
+        authorDisplayName: parts[2]?.trim() || '',
+        content: parts[3]?.trim() || '',
+        permalink: parts[4]?.trim() || undefined,
+        isRead: false,
+        repliedTo: false,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterMention(mention);
+      emitEntityUpdate('twitterMention');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `New mention from @${mention.authorUsername}`,
+        detail: mention.content.substring(0, 100),
+      });
+    },
+  });
+
+const registerTwitterThreadAction = () =>
+  registerAction({
+    id: 'twitter.thread.create',
+    label: 'Create Twitter thread',
+    handler: async (payload = '') => {
+      // Format: title|status|tags||tweet1||tweet2||tweet3...
+      const parts = payload.split('||');
+      const [metaPart, ...tweetParts] = parts;
+      const [title, status, tags] = metaPart.split('|');
+
+      const thread: TwitterThread = {
+        id: `twitter-thread-${Date.now()}`,
+        title: title?.trim() || undefined,
+        status: (status?.trim() as 'draft' | 'scheduled' | 'posted') || 'draft',
+        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+        tweets: tweetParts.map(t => ({ content: t.trim() })).filter(t => t.content),
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterThread(thread);
+      emitEntityUpdate('twitterThread');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Thread created: ${thread.title || 'Untitled'}`,
+        detail: `${thread.tweets.length} tweets`,
+      });
+    },
+  });
+
+const registerTwitterMetricsAction = () =>
+  registerAction({
+    id: 'twitter.metrics.log',
+    label: 'Log Twitter metrics',
+    handler: async (payload = '') => {
+      // Format: date|followers|following|totalTweets|totalImpressions|totalEngagements
+      const parts = payload.split('|');
+      const metrics: TwitterMetrics = {
+        id: `twitter-metrics-${Date.now()}`,
+        date: parts[0]?.trim() || new Date().toISOString().split('T')[0],
+        followers: parseInt(parts[1]?.trim() || '0') || 0,
+        following: parseInt(parts[2]?.trim() || '0') || 0,
+        totalTweets: parseInt(parts[3]?.trim() || '0') || 0,
+        totalImpressions: parseInt(parts[4]?.trim() || '0') || undefined,
+        totalEngagements: parseInt(parts[5]?.trim() || '0') || undefined,
+        createdAt: Date.now(),
+      };
+      await entityStorage.saveTwitterMetrics(metrics);
+      emitEntityUpdate('twitterMetrics');
+      logSylviaEvent({
+        kind: 'twitter',
+        summary: `Metrics logged for ${metrics.date}`,
+        detail: `${metrics.followers} followers, ${metrics.totalTweets} tweets`,
+      });
+    },
+  });
+
 const registerDeleteActions = () => {
   // Delete actions for Sylvia
   const deleteActions = [
@@ -377,6 +630,11 @@ const registerDeleteActions = () => {
     { id: 'deliverable.delete', entityType: 'deliverable', storageFn: entityStorage.deleteDeliverable.bind(entityStorage) },
     { id: 'goal.delete', entityType: 'goal', storageFn: entityStorage.deleteGoal.bind(entityStorage) },
     { id: 'task.delete', entityType: 'task', storageFn: entityStorage.deleteVendorTask.bind(entityStorage) },
+    { id: 'twitter.draft.delete', entityType: 'twitterDraft', storageFn: entityStorage.deleteTwitterDraft.bind(entityStorage) },
+    { id: 'twitter.scheduled.delete', entityType: 'twitterScheduled', storageFn: entityStorage.deleteTwitterScheduledPost.bind(entityStorage) },
+    { id: 'twitter.list.delete', entityType: 'twitterList', storageFn: entityStorage.deleteTwitterList.bind(entityStorage) },
+    { id: 'twitter.hashtag.delete', entityType: 'twitterHashtag', storageFn: entityStorage.deleteTwitterHashtagTracker.bind(entityStorage) },
+    { id: 'twitter.thread.delete', entityType: 'twitterThread', storageFn: entityStorage.deleteTwitterThread.bind(entityStorage) },
   ];
 
   return deleteActions.map(({ id, entityType, storageFn }) =>
@@ -416,6 +674,15 @@ export const initSylviaActions = () => {
     registerPomodoroAction(),
     registerGoalAction(),
     registerVendorTaskAction(),
+    registerTwitterAccountAction(),
+    registerTwitterDraftAction(),
+    registerTwitterScheduleAction(),
+    registerTwitterAnalyticsAction(),
+    registerTwitterListAction(),
+    registerTwitterHashtagAction(),
+    registerTwitterMentionAction(),
+    registerTwitterThreadAction(),
+    registerTwitterMetricsAction(),
     ...registerDeleteActions(),
   ];
   initialized = true;

@@ -15,6 +15,7 @@ import GamificationPage from './components/pages/GamificationPage';
 import PolarisPage from './components/pages/PolarisPage';
 import MemorySearchPage from './components/pages/MemorySearchPage';
 import EntityDetailPage from './components/pages/EntityDetailPage';
+import TwitterPage from './components/pages/TwitterPage';
 import LevelUpNotification from './components/LevelUpNotification';
 import { AppView } from './types';
 
@@ -61,6 +62,8 @@ const AppContent: React.FC = () => {
         return <PolarisPage />;
       case AppView.SEARCH:
         return <MemorySearchPage />;
+      case AppView.TWITTER:
+        return <TwitterPage />;
       case AppView.SETTINGS:
         return <SettingsView />;
     }

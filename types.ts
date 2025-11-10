@@ -17,6 +17,7 @@ export enum AppView {
     GAMIFICATION = 'gamification',
     POLARIS = 'polaris',
     SEARCH = 'search',
+    TWITTER = 'twitter',
 }
 
 export interface FileAttachment {
@@ -247,4 +248,145 @@ export interface VendorTask {
     };
     createdAt: number;
     updatedAt?: number;
+}
+
+// ===== Twitter/X Integration Types =====
+
+export interface TwitterAccount {
+    id: string;
+    username: string;
+    displayName: string;
+    isConnected: boolean;
+    apiKey?: string;
+    apiSecret?: string;
+    accessToken?: string;
+    accessTokenSecret?: string;
+    bearerToken?: string;
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterDraft {
+    id: string;
+    content: string;
+    mediaUrls?: string[];
+    threadTweets?: string[]; // For thread drafts
+    tags?: string[];
+    isThread: boolean;
+    replyToTweetId?: string; // If this is a reply
+    quoteTweetId?: string; // If this is a quote tweet
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterScheduledPost {
+    id: string;
+    content: string;
+    scheduledAt: number; // Unix timestamp when to post
+    mediaUrls?: string[];
+    threadTweets?: string[]; // For scheduled threads
+    tags?: string[];
+    status: 'pending' | 'posted' | 'failed' | 'cancelled';
+    postedAt?: number;
+    tweetId?: string; // ID from Twitter after posting
+    errorMessage?: string;
+    replyToTweetId?: string;
+    quoteTweetId?: string;
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterAnalytics {
+    id: string;
+    tweetId: string;
+    impressions?: number;
+    engagements?: number;
+    likes?: number;
+    retweets?: number;
+    replies?: number;
+    profileClicks?: number;
+    urlClicks?: number;
+    hashtagClicks?: number;
+    detailExpands?: number;
+    permalink?: string;
+    fetchedAt: number;
+    createdAt: number;
+}
+
+export interface TwitterList {
+    id: string;
+    listId: string; // Twitter list ID
+    name: string;
+    description?: string;
+    memberCount?: number;
+    subscriberCount?: number;
+    isPrivate: boolean;
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterDM {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    recipientId: string;
+    content: string;
+    mediaUrls?: string[];
+    sentAt: number;
+    readAt?: number;
+    isRead: boolean;
+    createdAt: number;
+}
+
+export interface TwitterHashtagTracker {
+    id: string;
+    hashtag: string;
+    isActive: boolean;
+    trackingStartedAt: number;
+    lastCheckedAt?: number;
+    tweetCount?: number;
+    notes?: string;
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterMention {
+    id: string;
+    tweetId: string;
+    authorUsername: string;
+    authorDisplayName: string;
+    content: string;
+    createdAt: number;
+    isRead: boolean;
+    repliedTo?: boolean;
+    permalink?: string;
+}
+
+export interface TwitterThread {
+    id: string;
+    title?: string;
+    tweets: Array<{
+        content: string;
+        mediaUrls?: string[];
+    }>;
+    status: 'draft' | 'scheduled' | 'posted';
+    scheduledAt?: number;
+    postedAt?: number;
+    tweetIds?: string[]; // IDs from Twitter after posting
+    tags?: string[];
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface TwitterMetrics {
+    id: string;
+    date: string; // YYYY-MM-DD format
+    followers: number;
+    following: number;
+    totalTweets: number;
+    totalImpressions?: number;
+    totalEngagements?: number;
+    profileVisits?: number;
+    mentions?: number;
+    createdAt: number;
 }

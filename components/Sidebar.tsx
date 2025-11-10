@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { AppView } from '../types';
+import { Twitter } from 'lucide-react';
 import {
   PlusIcon,
   SearchIcon,
@@ -60,6 +61,7 @@ const Sidebar: React.FC = () => {
     { label: 'Agenda', view: AppView.AGENDA, icon: <PanelRightOpenIcon className="w-4 h-4" /> },
     { label: 'Calendar', view: AppView.CALENDAR, icon: <DocumentDuplicateIcon className="w-4 h-4" /> },
     { label: 'Pomodoro', view: AppView.POMODORO, icon: <PanelRightOpenIcon className="w-4 h-4" /> },
+    { label: 'Twitter/X', view: AppView.TWITTER, icon: <Twitter className="w-4 h-4" /> },
     { label: 'Polaris', view: AppView.POLARIS, icon: <SparklesIcon className="w-4 h-4" /> },
     { label: 'Progress', view: AppView.GAMIFICATION, icon: <DocumentDuplicateIcon className="w-4 h-4" /> },
     { label: 'Brand', view: AppView.BRAND, icon: <SparklesIcon className="w-4 h-4" /> },
