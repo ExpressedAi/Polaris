@@ -120,7 +120,7 @@ const BrandPage: React.FC = () => {
   return (
     <PageShell title="Brand Systems" subtitle="Your brand DNA. Voice, visual language, positioning, and values that Sylvia references in every conversation.">
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-6 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6">
         {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
           const category = key as BrandCategory;
           const count = categoryCounts[category];
@@ -188,7 +188,7 @@ const BrandPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRecords.map(record => {
             const category = detectCategory(record.name, record.description);
             const config = CATEGORY_CONFIG[category];

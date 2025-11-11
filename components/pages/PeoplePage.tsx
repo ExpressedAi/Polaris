@@ -297,7 +297,7 @@ const PeoplePage: React.FC = () => {
       subtitle="Rich profiles, attributes, and connections. The foundation for Sylvia's context engineering and Polaris goal execution."
     >
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <Users className="w-6 h-6 text-blue-600" />
@@ -450,7 +450,7 @@ const PeoplePage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRecords.map(record => {
             const isEditing = editingRecord?.id === record.id;
             const isSelected = selectedPerson?.id === record.id;

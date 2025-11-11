@@ -142,7 +142,7 @@ const ConceptsPage: React.FC = () => {
       subtitle="Ideas, applications, technologies, and concepts. Track your thinking and innovations."
     >
       {/* Stats Dashboard */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <Lightbulb className="w-6 h-6 text-purple-600" />
@@ -265,7 +265,7 @@ const ConceptsPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-w-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0">
           {filteredConcepts.map(concept => {
             const isEditing = editingConcept?.id === concept.id;
 

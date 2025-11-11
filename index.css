@@ -455,3 +455,210 @@ body::after {
 .admonition-danger .admonition-title {
   color: rgba(153, 27, 27, 1);
 }
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+/* Mobile-first: Tablets and below (< 1024px) */
+@media (max-width: 1023px) {
+  /* Ensure body doesn't overflow */
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Remove grid patterns on mobile for better performance */
+  body::after {
+    display: none;
+  }
+
+  /* Adjust glass panel blur for better mobile performance */
+  .glass-panel {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Larger touch targets for buttons */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better tap feedback */
+  button:active {
+    transform: scale(0.98);
+  }
+
+  /* Larger text inputs for mobile */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Better spacing for mobile */
+  .message-content {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Adjust markdown styling for mobile */
+  .sylvia-markdown-panel {
+    padding: 0.875rem 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .sylvia-markdown-panel pre,
+  .concept-description pre {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better code wrapping on mobile */
+  .sylvia-markdown-panel code,
+  .concept-description code {
+    font-size: 0.8rem;
+    word-break: break-word;
+  }
+
+  /* Admonitions optimized for mobile */
+  .admonition {
+    padding: 0.875rem 1rem;
+    border-radius: 16px;
+    margin-bottom: 0.875rem;
+  }
+
+  .admonition-title {
+    font-size: 0.7rem;
+  }
+
+  .admonition-body {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile phones: Small screens (< 640px) */
+@media (max-width: 639px) {
+  /* Further reduce blur for better performance on phones */
+  .glass-panel {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Optimize scrollbars for mobile */
+  .soft-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .soft-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Even larger touch targets on small phones */
+  button {
+    min-height: 48px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Reduce heading sizes on mobile */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.125rem; }
+  h4 { font-size: 1rem; }
+
+  /* Compact message bubbles on small screens */
+  .sylvia-markdown-panel {
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* Better list spacing on mobile */
+  .concept-description ul,
+  .concept-description ol,
+  .sylvia-markdown-panel ul,
+  .sylvia-markdown-panel ol {
+    padding-left: 1.25rem;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 1023px) and (orientation: landscape) {
+  /* Reduce vertical padding in landscape */
+  .glass-panel {
+    padding: 0.75rem;
+  }
+
+  /* Compact messages in landscape */
+  .message-content {
+    line-height: 1.5;
+  }
+}
+
+/* Touch-specific optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .admonition:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Larger tap targets */
+  a, button, [role="button"], [onclick] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better scroll behavior on touch */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text selection during touch interactions */
+  .resize-handle,
+  button {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* High DPI / Retina display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .glass-panel {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-bounce,
+  .animate-bounce-subtle,
+  .animate-pulse {
+    animation: none !important;
+  }
+}

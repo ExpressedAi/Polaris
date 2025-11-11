@@ -260,7 +260,7 @@ const JournalPage: React.FC = () => {
       subtitle="Long-form reflections feed Sylvia's JIT memory. Rich context for understanding patterns and growth."
     >
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-6 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <BookOpen className="w-6 h-6 text-blue-600" />
@@ -332,7 +332,7 @@ const JournalPage: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {suggestions.map(snippet => (
               <div
                 key={snippet.id}

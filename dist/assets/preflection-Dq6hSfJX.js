@@ -1,0 +1,40 @@
+import{g as C,r as R,s as S}from"./index-dBaw5RoB.js";async function N(t,o,n,c,e,r,s){const p=await C(t),i=p.length,m=await R(o,5),l=m.length,h=P(o),u=(n==null?void 0:n.type)!==null&&(n==null?void 0:n.data)!==void 0,g=M(p,i),{topicCoherence:f,recentTopicShifts:a}=A(p,o),x=I(m,o),y=O(g,f,x,u),$={threadLength:i,memoryCount:l,hasActiveEntity:u,queryType:h,threadComplexity:g,topicCoherence:f,recentTopicShifts:a,memoryRelevance:x},w=`You are a context engineering system performing Preflection - dynamic instruction generation for an AI agent.
+
+CONTEXT ANALYSIS:
+- Thread Length: ${i} messages
+- Thread Complexity: ${g}
+- Relevant Memories: ${l} snippets available (Relevance: ${(x*100).toFixed(0)}%)
+- Topic Coherence: ${(f*100).toFixed(0)}%
+- Recent Topic Shifts: ${a}
+- Active Entity: ${u?`User is viewing/working on: ${n.type}`:"None"}
+- Query Type: ${h}
+- Instruction Weight: ${(y*100).toFixed(0)}% (${y>.7?"HIGH PRIORITY":y>.5?"MODERATE PRIORITY":"SUPPLEMENTARY"})
+- Base System Instructions: ${c.substring(0,500)}${c.length>500?"...":""}
+${e.length>0?`- Weighted Prompts: ${e.length} prompts configured`:""}
+
+USER QUERY:
+"${o}"
+
+AVAILABLE MEMORY CONTEXT:
+${m.length>0?m.map((d,v)=>`${v+1}. ${d.text.substring(0,200)}${d.text.length>200?"...":""}`).join(`
+`):"No relevant memories found"}
+
+TASK:
+Generate dynamic, query-specific system instructions that will be temporarily appended to the agent's base instruction set. These instructions should:
+
+1. Address the specific requirements of this query
+2. Leverage available context (thread history, memories, active entity)
+3. Optimize for the detected query type (${h})
+4. Provide enhanced guidance without contradicting base instructions
+5. Be concise but comprehensive (aim for 2-4 sentences)
+
+${i>20?"NOTE: This is a long conversation. Focus on preventing repetition and maintaining coherence.":""}
+${g==="very-complex"?"NOTE: This is a very complex conversation. Provide clear, structured guidance to maintain coherence.":""}
+${f<.5?`NOTE: Topic coherence is low (${(f*100).toFixed(0)}%). Recent topic shifts detected. Help maintain focus and clarity.`:""}
+${a>2?`NOTE: ${a} topic shifts detected in recent messages. Help bridge context and maintain continuity.`:""}
+${l>0?`NOTE: Leverage the available memory context (relevance: ${(x*100).toFixed(0)}%) to provide more relevant responses.`:""}
+${u?"NOTE: The user is currently focused on a specific entity. Tailor instructions to work with that context.":""}
+${y>.7?`NOTE: Dynamic instructions have HIGH PRIORITY (weight: ${(y*100).toFixed(0)}%). These instructions should strongly influence the response.`:""}
+
+Respond ONLY with the dynamic instructions to append. Do not include explanations or meta-commentary. Just the instructions themselves.`;try{const d=await S([{role:"system",content:"You are a context engineering system. Generate dynamic instructions for AI agents based on query analysis. Respond only with the instructions, no explanations."},{role:"user",content:w}],{apiKey:r,mainModel:s,temperature:.5,maxTokens:500}),v=`Generated dynamic instructions for ${h} query. Thread: ${i} messages, ${l} relevant memories${u?`, active entity: ${n.type}`:""}.`,{inferenceParameters:T,parameterReasoning:b}=z(h,i,l,$);return{dynamicInstructions:d.trim(),reasoning:v,contextAnalysis:$,inferenceParameters:T,parameterReasoning:b,instructionWeight:y}}catch(d){return console.error("Preflection failed:",d),{dynamicInstructions:"",reasoning:`Preflection analysis failed: ${d instanceof Error?d.message:String(d)}`,contextAnalysis:$,instructionWeight:.5}}}function P(t){var f;const o=t.toLowerCase(),n=["what","when","where","who","how many","list","tell me","explain","define"],c=["code","function","api","implementation","debug","error","bug","technical","algorithm","architecture"],e=["create","design","imagine","brainstorm","idea","concept","write","story","generate"],r=["explore","analyze","investigate","research","compare","evaluate","consider","think about"],s=n.filter(a=>o.includes(a)).length,p=c.filter(a=>o.includes(a)).length,i=e.filter(a=>o.includes(a)).length,m=r.filter(a=>o.includes(a)).length,l=[{type:"factual",score:s},{type:"technical",score:p},{type:"creative",score:i},{type:"exploratory",score:m}],h=Math.max(...l.map(a=>a.score));if(h===0)return"mixed";const u=((f=l.find(a=>a.score===h))==null?void 0:f.type)||"mixed";return l.filter(a=>a.score>=h-1&&a.type!==u).length>0?"mixed":u}function z(t,o,n,c){const e={},r=[];switch(t){case"factual":e.temperature=.3,r.push("Temperature set to 0.3 for factual precision");break;case"technical":e.temperature=.4,r.push("Temperature set to 0.4 for technical accuracy");break;case"creative":e.temperature=1.2,r.push("Temperature set to 1.2 for creative exploration");break;case"exploratory":e.temperature=.9,r.push("Temperature set to 0.9 for exploratory reasoning");break;case"mixed":e.temperature=.7,r.push("Temperature set to 0.7 for balanced mixed query");break}if(t==="factual"||t==="technical"?(e.topP=.85,r.push("Top-p narrowed to 0.85 for precise token selection")):t==="creative"||t==="exploratory"?(e.topP=.95,r.push("Top-p widened to 0.95 for exploratory reasoning")):(e.topP=.9,r.push("Top-p set to 0.9 for balanced sampling")),(t==="factual"||t==="technical")&&(e.topK=40,r.push("Top-k limited to 40 for precise token selection")),o>15||n>3||topicCoherence<.5){let s=.2;threadComplexity==="very-complex"?s=.35:threadComplexity==="complex"?s=.3:o>30&&(s=.25),e.frequencyPenalty=s,r.push(`Frequency penalty set to ${s} to reduce repetition (complexity: ${threadComplexity}, coherence: ${(topicCoherence*100).toFixed(0)}%, ${o} messages, ${n} memories)`)}if((t==="exploratory"||t==="creative")&&(e.presencePenalty=.2,r.push("Presence penalty set to 0.2 to encourage new concepts")),o>40||recentTopicShifts>2){const s=threadComplexity==="very-complex"?1.15:1.1;e.repetitionPenalty=s,r.push(`Repetition penalty set to ${s} to prevent circular reasoning (complexity: ${threadComplexity}, ${recentTopicShifts} topic shifts)`)}return topicCoherence<.4&&t!=="creative"&&e.temperature&&e.temperature>.5&&(e.temperature=Math.max(.4,e.temperature-.1),r.push(`Temperature adjusted to ${e.temperature} due to low topic coherence (${(topicCoherence*100).toFixed(0)}%)`)),memoryRelevance>.7&&(t==="factual"||t==="technical")&&e.temperature&&e.temperature>.3&&(e.temperature=Math.max(.3,e.temperature-.05),r.push(`Temperature adjusted to ${e.temperature} due to high memory relevance (${(memoryRelevance*100).toFixed(0)}%)`)),t==="technical"&&(e.minP=.05,r.push("Min-p set to 0.05 for technical precision")),{inferenceParameters:e,parameterReasoning:r.length>0?r.join(`
+`):"Using default parameters (no optimization applied)"}}function M(t,o){return o<=5?"simple":o<=15?"moderate":o<=40?"complex":"very-complex"}function A(t,o){if(t.length<3)return{topicCoherence:1,recentTopicShifts:0};const n=t.slice(-5),c=new Set;n.forEach(i=>{(i.text.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]).forEach(l=>c.add(l))});const e=new Set(o.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]),r=Array.from(e).filter(i=>c.has(i)).length,s=e.size>0?r/e.size:.5;let p=0;for(let i=1;i<n.length;i++){const m=new Set(n[i-1].text.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]),l=new Set(n[i].text.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]),h=Array.from(l).filter(g=>m.has(g)).length;(m.size>0?1-h/m.size:0)>.6&&p++}return{topicCoherence:Math.min(1,Math.max(0,s)),recentTopicShifts:p}}function I(t,o){if(t.length===0)return 0;const n=new Set(o.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]);let c=0;return t.forEach(e=>{const r=new Set(e.text.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]),s=Array.from(n).filter(i=>r.has(i)).length,p=n.size>0?s/n.size:0;c+=e.relevance!==void 0?p*e.relevance:p}),Math.min(1,c/t.length)}function O(t,o,n,c){let e=.5;switch(t){case"very-complex":e+=.2;break;case"complex":e+=.15;break;case"moderate":e+=.1;break;case"simple":e+=.05;break}return o<.5&&(e+=.15),n>.7&&(e+=.1),c&&(e+=.1),Math.min(.9,Math.max(.3,e))}export{N as performPreflection};

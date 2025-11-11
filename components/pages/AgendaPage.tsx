@@ -424,7 +424,7 @@ Generate 5-15 tasks that break down these deliverables into actionable steps.`;
       subtitle="Autonomous & semi-autonomous workflow builder. Set up task sequences for Sylvia to execute or guide you through."
     >
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-7 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <ListChecks className="w-6 h-6 text-blue-600" />
@@ -916,7 +916,7 @@ Generate 5-15 tasks that break down these deliverables into actionable steps.`;
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {deliverables.map(deliverable => {
               const isEditing = editingDeliverable?.id === deliverable.id;
               const deliverableItems = items.filter(i => i.deliverableId === deliverable.id);

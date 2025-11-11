@@ -283,7 +283,7 @@ const PomodoroPage: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-red-50 to-orange-50 p-4">
           <div className="flex items-center justify-between mb-2">
             <Timer className="w-6 h-6 text-red-600" />
