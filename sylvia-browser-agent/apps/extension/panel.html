@@ -13,21 +13,91 @@
         <div id="goal-label">No goal set</div>
       </header>
 
+      <nav class="nav">
+        <button class="nav-tab nav-tab-active" data-view="chat">Chat</button>
+        <button class="nav-tab" data-view="automations">Automations</button>
+      </nav>
+
       <main class="main">
-        <div class="controls">
-          <button id="btn-summary" class="btn btn-primary">✨ Summarize</button>
-          <button id="btn-tasks" class="btn">✓ Tasks</button>
-          <button id="btn-concept" class="btn">💡 Concept</button>
+        <!-- Chat view -->
+        <div class="view view-chat active" id="view-chat">
+          <div class="controls">
+            <button id="btn-summary" class="btn btn-primary">✨ Summarize</button>
+            <button id="btn-tasks" class="btn">✓ Tasks</button>
+            <button id="btn-concept" class="btn">💡 Concept</button>
+          </div>
+
+          <div class="status" id="status">Ready to analyze this page...</div>
+
+          <section class="output" id="output">
+            <div class="empty-state">
+              <div class="empty-icon">🚀</div>
+              <div class="empty-text">Click a button to interact with this page</div>
+            </div>
+          </section>
         </div>
 
-        <div class="status" id="status">Ready to analyze this page...</div>
+        <!-- Automations view -->
+        <div class="view view-automations" id="view-automations">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Automations</h2>
+              <button id="btn-refresh-autos" class="btn btn-ghost">↻ Refresh</button>
+            </div>
 
-        <section class="output" id="output">
-          <div class="empty-state">
-            <div class="empty-icon">🚀</div>
-            <div class="empty-text">Click a button to interact with this page</div>
-          </div>
-        </section>
+            <div id="auto-list" class="auto-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div class="auto-divider"></div>
+
+            <form id="auto-form" class="auto-form">
+              <h3>Create automation</h3>
+
+              <label class="field">
+                <span class="field-label">Name</span>
+                <input
+                  type="text"
+                  id="auto-name"
+                  placeholder="e.g. Monitor this docs page"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Target URL</span>
+                <input
+                  type="url"
+                  id="auto-url"
+                  placeholder="Defaults to current page if empty"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Command</span>
+                <select id="auto-command" required>
+                  <!-- Options filled from /api/commands -->
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Interval (minutes)</span>
+                <input
+                  type="number"
+                  id="auto-interval"
+                  min="1"
+                  step="1"
+                  value="60"
+                  required
+                />
+              </label>
+
+              <button type="submit" class="btn btn-primary full-width">
+                + Create automation
+              </button>
+            </form>
+          </section>
+        </div>
       </main>
 
       <footer class="bottom">

@@ -77,12 +77,26 @@ The server will start on `http://localhost:4000`.
 
 ## 📖 Usage
 
-### Side Panel Controls
+### Side Panel Views
 
+The side panel has two tabs:
+
+#### Chat View
 - **✨ Summarize** - Get a concise, actionable summary of the current page
 - **✓ Tasks** - Generate Polaris-style tasks from page content
 - **💡 Concept** - Extract one key concept worth remembering
 - **Chat input** - Ask Sylvia custom questions about the page
+
+#### Automations View
+- **View automations** - See all your scheduled automations
+- **Create automation** - Set up recurring page analysis
+  - Name your automation
+  - Choose a command (Summarize, Tasks, Concept)
+  - Set interval in minutes
+  - Target URL (defaults to current page)
+- **Toggle enabled/disabled** - Pause automations without deleting
+- **View status** - See when automations last ran and if they succeeded
+- **Delete automations** - Remove automations you no longer need
 
 ### Commands
 

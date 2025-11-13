@@ -290,3 +290,216 @@ body {
   outline: none;
   border-color: var(--accent);
 }
+
+/* Navigation tabs */
+.nav {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(5, 7, 15, 0.9);
+  border: 1px solid var(--border-subtle);
+}
+
+.nav-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 11px;
+  padding: 4px 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-tab-active {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+/* View switching */
+.view {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+}
+
+.view.active {
+  display: flex;
+}
+
+/* Automations section */
+.auto-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.auto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auto-header h2 {
+  font-size: 13px;
+  margin: 0;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-subtle);
+  font-size: 11px;
+  padding-inline: 8px;
+}
+
+.auto-list {
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: var(--bg-strong);
+  border: 1px solid var(--border-subtle);
+  padding: 6px;
+  font-size: 11px;
+}
+
+.auto-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auto-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auto-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.auto-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.auto-empty {
+  padding: 10px;
+  text-align: center;
+  color: var(--text-subtle);
+}
+
+.auto-card {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 6px;
+}
+
+.auto-name {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.auto-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-subtle);
+}
+
+.auto-status-ok {
+  color: #4ade80;
+}
+
+.auto-status-error {
+  color: #fb7185;
+}
+
+.auto-actions {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.auto-toggle input[type="checkbox"] {
+  transform: scale(0.9);
+}
+
+.auto-delete {
+  background: transparent;
+  border: none;
+  color: #fb7185;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.auto-divider {
+  height: 1px;
+  margin: 6px 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+}
+
+.auto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(4, 6, 12, 0.95);
+  border: 1px solid var(--border-subtle);
+  font-size: 11px;
+}
+
+.auto-form h3 {
+  font-size: 12px;
+  margin: 0 0 2px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.field-label {
+  font-size: 10px;
+  color: var(--text-subtle);
+}
+
+.field input,
+.field select {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 10, 20, 0.9);
+  color: var(--text-main);
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.full-width {
+  width: 100%;
+}
