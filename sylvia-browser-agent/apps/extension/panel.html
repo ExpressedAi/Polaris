@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sylvia Sidecar</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="top-bar">
+        <div class="logo">Sylvia<span>Sidecar</span></div>
+        <div id="goal-label">No goal set</div>
+      </header>
+
+      <main class="main">
+        <div class="controls">
+          <button id="btn-summary" class="btn btn-primary">✨ Summarize</button>
+          <button id="btn-tasks" class="btn">✓ Tasks</button>
+          <button id="btn-concept" class="btn">💡 Concept</button>
+        </div>
+
+        <div class="status" id="status">Ready to analyze this page...</div>
+
+        <section class="output" id="output">
+          <div class="empty-state">
+            <div class="empty-icon">🚀</div>
+            <div class="empty-text">Click a button to interact with this page</div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="bottom">
+        <textarea
+          id="chat-input"
+          rows="2"
+          placeholder="Ask Sylvia about this page…"
+        ></textarea>
+        <button id="btn-chat" class="btn btn-accent">→</button>
+      </footer>
+    </div>
+
+    <script src="panel.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Sylvia Sidecar",
+  "version": "0.1.0",
+  "description": "Glassmorphism Sylvia browser side panel: summarize pages, create tasks, capture concepts.",
+  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Open Sylvia Sidecar"
+  }
+}
