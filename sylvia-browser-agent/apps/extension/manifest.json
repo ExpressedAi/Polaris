@@ -17,10 +17,10 @@
       "matches": ["<all_urls>"],
       "js": ["contentScript.js"],
       "run_at": "document_idle",
-      "exclude_matches": ["https://chat.openai.com/*"]
+      "exclude_matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"]
     },
     {
-      "matches": ["https://chat.openai.com/*"],
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
       "js": ["chatgptContentScript.js"],
       "run_at": "document_idle"
     }

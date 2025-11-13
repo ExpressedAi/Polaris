@@ -1,153 +1,96 @@
 // ChatGPT Web Interface Client
-// Interacts with chat.openai.com using the user's ChatGPT Pro account
+// Uses existing ChatGPT Pro subscription through browser automation
 
 class ChatGPTClient {
   constructor() {
-    this.chatTabId = null;
-    this.pendingRequests = new Map();
+    this.chatGPTUrl = "https://chatgpt.com";
+    this.responseTimeout = 60000; // 60 seconds
   }
 
   /**
-   * Send a message to ChatGPT and get response
-   * @param {string} message - The message to send
-   * @param {Object} options - Options like model, temperature
-   * @returns {Promise<string>} - ChatGPT's response
+   * Send message to ChatGPT and get response
+   * Uses browser automation - no API keys required
    */
-  async chat(message, options = {}) {
-    // Ensure we have a ChatGPT tab open
-    await this.ensureChatGPTTab();
-
-    // Generate request ID
-    const requestId = `req-${Date.now()}-${Math.random()}`;
-
-    // Create promise for response
-    const responsePromise = new Promise((resolve, reject) => {
-      this.pendingRequests.set(requestId, { resolve, reject });
-
-      // Timeout after 120 seconds
-      setTimeout(() => {
-        if (this.pendingRequests.has(requestId)) {
-          this.pendingRequests.delete(requestId);
-          reject(new Error("ChatGPT request timeout"));
-        }
-      }, 120000);
-    });
-
-    // Send message to ChatGPT tab
+  async chat(message) {
     try {
-      await chrome.tabs.sendMessage(this.chatTabId, {
-        type: "CHATGPT_SEND_MESSAGE",
-        requestId,
-        message,
-        options
-      });
-    } catch (err) {
-      this.pendingRequests.delete(requestId);
-      throw new Error(`Failed to communicate with ChatGPT tab: ${err.message}`);
-    }
+      // Open ChatGPT in a new tab
+      const tab = await this.ensureChatGPTTab();
 
-    return responsePromise;
-  }
+      // Send message and wait for response
+      const response = await this.sendMessage(tab.id, message);
 
-  /**
-   * Handle response from ChatGPT content script
-   */
-  handleResponse(requestId, response, error) {
-    const pending = this.pendingRequests.get(requestId);
-    if (!pending) return;
-
-    this.pendingRequests.delete(requestId);
-
-    if (error) {
-      pending.reject(new Error(error));
-    } else {
-      pending.resolve(response);
+      return response;
+    } catch (error) {
+      console.error("ChatGPT client error:", error);
+      throw error;
     }
   }
 
   /**
-   * Ensure we have a ChatGPT tab open and ready
+   * Ensure we have a ChatGPT tab open
    */
   async ensureChatGPTTab() {
-    // Check if existing tab is still valid
-    if (this.chatTabId) {
-      try {
-        const tab = await chrome.tabs.get(this.chatTabId);
-        if (tab && tab.url && tab.url.includes("chat.openai.com")) {
-          // Ping the tab to see if content script is ready
-          try {
-            await chrome.tabs.sendMessage(this.chatTabId, { type: "CHATGPT_PING" });
-            return; // Tab is ready
-          } catch (e) {
-            // Content script not ready, continue to create new tab
+    return new Promise((resolve) => {
+      chrome.tabs.query({ url: ["https://chatgpt.com/*", "https://chat.openai.com/*"] }, (tabs) => {
+        if (tabs.length > 0) {
+          // Use existing tab
+          resolve(tabs[0]);
+        } else {
+          // Create new tab
+          chrome.tabs.create({ url: this.chatGPTUrl, active: false }, (tab) => {
+            // Wait for page to load
+            chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+              if (tabId === tab.id && info.status === 'complete') {
+                chrome.tabs.onUpdated.removeListener(listener);
+                // Give content script a moment to initialize
+                setTimeout(() => resolve(tab), 500);
+              }
+            });
+          });
+        }
+      });
+    });
+  }
+
+  /**
+   * Send message to ChatGPT tab and wait for response
+   */
+  async sendMessage(tabId, message) {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("ChatGPT response timeout"));
+      }, this.responseTimeout);
+
+      // Inject content script if needed and send message
+      chrome.tabs.sendMessage(
+        tabId,
+        {
+          type: "CHATGPT_SEND_MESSAGE",
+          message: message
+        },
+        (response) => {
+          clearTimeout(timeout);
+
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+
+          if (response && response.ok) {
+            resolve(response.text);
+          } else {
+            reject(new Error(response?.error || "Failed to get ChatGPT response"));
           }
         }
-      } catch (e) {
-        // Tab doesn't exist, continue to create new
-      }
-    }
-
-    // Find existing ChatGPT tab
-    const tabs = await chrome.tabs.query({ url: "https://chat.openai.com/*" });
-    if (tabs.length > 0) {
-      this.chatTabId = tabs[0].id;
-
-      // Inject our content script if not already injected
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: this.chatTabId },
-          files: ["chatgptContentScript.js"]
-        });
-      } catch (e) {
-        // Script might already be injected
-      }
-
-      // Wait a bit for script to initialize
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return;
-    }
-
-    // Create new ChatGPT tab (hidden)
-    const newTab = await chrome.tabs.create({
-      url: "https://chat.openai.com",
-      active: false
+      );
     });
-
-    this.chatTabId = newTab.id;
-
-    // Wait for tab to load
-    await new Promise((resolve) => {
-      const listener = (tabId, changeInfo) => {
-        if (tabId === this.chatTabId && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener);
-          resolve();
-        }
-      };
-      chrome.tabs.onUpdated.addListener(listener);
-    });
-
-    // Inject our content script
-    await chrome.scripting.executeScript({
-      target: { tabId: this.chatTabId },
-      files: ["chatgptContentScript.js"]
-    });
-
-    // Wait for script to initialize
-    await new Promise(resolve => setTimeout(resolve, 2000));
   }
 }
 
-// Singleton instance
-const chatGPTClient = new ChatGPTClient();
-
-// Handle responses from ChatGPT content script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "CHATGPT_RESPONSE") {
-    chatGPTClient.handleResponse(message.requestId, message.response, message.error);
-    sendResponse({ ok: true });
-    return true;
-  }
-});
-
 // Export for use in other scripts
-window.chatGPTClient = chatGPTClient;
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ChatGPTClient;
+}
+
+// Make available globally for panel.js
+window.chatGPTClient = new ChatGPTClient();

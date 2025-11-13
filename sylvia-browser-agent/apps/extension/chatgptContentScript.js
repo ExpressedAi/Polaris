@@ -1,175 +1,137 @@
-// Content script that runs on chat.openai.com
-// Handles sending messages and extracting responses
+// Content script for chat.openai.com
+// Handles message injection and response scraping
 
 (function() {
-  console.log("[Sylvia] ChatGPT content script loaded");
+  'use strict';
 
   // Listen for messages from extension
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "CHATGPT_PING") {
-      sendResponse({ ok: true });
-      return true;
-    }
-
     if (message.type === "CHATGPT_SEND_MESSAGE") {
-      handleSendMessage(message.requestId, message.message, message.options)
+      handleChatGPTMessage(message.message)
         .then(response => {
-          chrome.runtime.sendMessage({
-            type: "CHATGPT_RESPONSE",
-            requestId: message.requestId,
-            response
-          });
+          sendResponse({ ok: true, text: response });
         })
         .catch(error => {
-          chrome.runtime.sendMessage({
-            type: "CHATGPT_RESPONSE",
-            requestId: message.requestId,
-            error: error.message
-          });
+          sendResponse({ ok: false, error: error.message });
         });
-
-      sendResponse({ ok: true });
-      return true;
+      return true; // Keep channel open for async response
     }
   });
 
   /**
-   * Send a message to ChatGPT and wait for response
+   * Send message to ChatGPT and wait for response
    */
-  async function handleSendMessage(requestId, messageText, options) {
-    console.log("[Sylvia] Sending message to ChatGPT:", messageText);
+  async function handleChatGPTMessage(messageText) {
+    // Find the textarea
+    const textarea = document.querySelector('textarea[data-id]') ||
+                     document.querySelector('#prompt-textarea') ||
+                     document.querySelector('textarea');
 
-    // Find the textarea input
-    const textarea = await waitForElement('textarea[data-id="root"]', 10000);
     if (!textarea) {
       throw new Error("Could not find ChatGPT input textarea");
     }
 
-    // Set the message text
+    // Set the message
     textarea.value = messageText;
-    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // Wait a bit for the send button to become enabled
-    await sleep(500);
+    // Wait a bit for UI to update
+    await sleep(100);
 
-    // Find and click send button
-    const sendButton = await waitForElement('button[data-testid="send-button"]', 5000);
+    // Find and click the send button
+    const sendButton = findSendButton();
     if (!sendButton) {
       throw new Error("Could not find ChatGPT send button");
     }
 
-    // Start monitoring for the response
-    const responsePromise = waitForResponse();
+    // Mark the time before sending
+    const beforeSend = Date.now();
 
     // Click send
     sendButton.click();
 
     // Wait for response
-    const response = await responsePromise;
-
-    console.log("[Sylvia] Received ChatGPT response:", response.substring(0, 100) + "...");
+    const response = await waitForResponse(beforeSend);
 
     return response;
   }
 
   /**
-   * Wait for ChatGPT to finish responding
+   * Find the send button (tries multiple selectors)
    */
-  async function waitForResponse() {
-    // Wait for the "Stop generating" button to appear (means response started)
-    await waitForElement('button[aria-label="Stop generating"]', 30000);
+  function findSendButton() {
+    const selectors = [
+      'button[data-testid="send-button"]',
+      'button[aria-label="Send message"]',
+      'button svg[class*="icon"]',
+      'button:has(svg)'
+    ];
 
-    // Now wait for it to disappear (means response finished)
-    let attempts = 0;
-    while (attempts < 300) { // 300 * 500ms = 150 seconds max
-      const stopButton = document.querySelector('button[aria-label="Stop generating"]');
-      if (!stopButton) {
-        // Response finished
-        break;
+    for (const selector of selectors) {
+      const button = document.querySelector(selector);
+      if (button && !button.disabled) {
+        return button;
       }
-      await sleep(500);
-      attempts++;
     }
 
-    if (attempts >= 300) {
-      throw new Error("ChatGPT response timeout");
-    }
-
-    // Wait a bit more for DOM to stabilize
-    await sleep(1000);
-
-    // Extract the response text from the last assistant message
-    const messages = document.querySelectorAll('[data-message-author-role="assistant"]');
-    if (messages.length === 0) {
-      throw new Error("Could not find ChatGPT response in page");
-    }
-
-    // Get the last assistant message
-    const lastMessage = messages[messages.length - 1];
-
-    // Extract text content
-    const responseText = extractTextFromMessage(lastMessage);
-
-    if (!responseText) {
-      throw new Error("ChatGPT response was empty");
-    }
-
-    return responseText;
+    return null;
   }
 
   /**
-   * Extract text content from a message element
+   * Wait for ChatGPT response to appear
    */
-  function extractTextFromMessage(messageElement) {
-    // Find the message content div
-    const contentDiv = messageElement.querySelector('[class*="markdown"]') ||
-                      messageElement.querySelector('[class*="prose"]') ||
-                      messageElement;
+  async function waitForResponse(afterTime, maxWait = 60000) {
+    const startTime = Date.now();
 
-    if (!contentDiv) return "";
+    while (Date.now() - startTime < maxWait) {
+      // Look for response message that appeared after our send time
+      const messages = document.querySelectorAll('[data-message-author-role="assistant"]');
 
-    // Get all text nodes, preserving structure
-    return contentDiv.innerText || contentDiv.textContent || "";
-  }
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
 
-  /**
-   * Wait for an element to appear in the DOM
-   */
-  function waitForElement(selector, timeout = 10000) {
-    return new Promise((resolve) => {
-      const element = document.querySelector(selector);
-      if (element) {
-        resolve(element);
-        return;
-      }
+        // Check if this message is still being typed (has the cursor)
+        const isTyping = lastMessage.querySelector('.result-streaming') ||
+                        lastMessage.querySelector('[class*="typing"]') ||
+                        lastMessage.textContent.trim().endsWith('▍');
 
-      const observer = new MutationObserver(() => {
-        const element = document.querySelector(selector);
-        if (element) {
-          observer.disconnect();
-          resolve(element);
+        if (!isTyping) {
+          // Get the text content
+          const text = extractMessageText(lastMessage);
+          if (text && text.trim().length > 0) {
+            return text;
+          }
         }
-      });
+      }
 
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
+      // Wait before checking again
+      await sleep(500);
+    }
 
-      // Timeout
-      setTimeout(() => {
-        observer.disconnect();
-        resolve(null);
-      }, timeout);
-    });
+    throw new Error("Timeout waiting for ChatGPT response");
   }
 
   /**
-   * Sleep utility
+   * Extract text from message element
+   */
+  function extractMessageText(element) {
+    // Remove any code blocks for now (can be enhanced later)
+    const clone = element.cloneNode(true);
+
+    // Remove button elements
+    const buttons = clone.querySelectorAll('button');
+    buttons.forEach(btn => btn.remove());
+
+    // Get text content
+    return clone.textContent.trim();
+  }
+
+  /**
+   * Sleep helper
    */
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  console.log("[Sylvia] ChatGPT content script ready");
+  console.log("ChatGPT content script loaded");
 })();
