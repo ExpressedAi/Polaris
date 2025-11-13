@@ -479,3 +479,61 @@ autoForm.addEventListener("submit", createAutomation);
 setStatus("Ready to analyze this page...");
 initNav();
 loadCommands();
+
+// ---------- Model Config Modal ----------
+
+const configModal = document.getElementById("config-modal");
+const settingsGear = document.getElementById("settings-gear");
+const btnCloseConfig = document.getElementById("btn-close-config");
+const btnSaveConfig = document.getElementById("btn-save-config");
+const configModelSelect = document.getElementById("config-model");
+const configTempSlider = document.getElementById("config-temperature");
+const configTempValue = document.getElementById("config-temperature-value");
+
+async function loadLlmConfig() {
+  try {
+    const json = await getJson("/api/config/llm");
+    if (json.ok && json.config) {
+      configModelSelect.value = json.config.model || "gpt-4o-mini";
+      configTempSlider.value = json.config.temperature || 0.4;
+      configTempValue.textContent = configTempSlider.value;
+    }
+  } catch (err) {
+    console.error("Failed to load LLM config:", err);
+  }
+}
+
+async function saveLlmConfig() {
+  try {
+    const config = {
+      model: configModelSelect.value,
+      temperature: parseFloat(configTempSlider.value)
+    };
+    await postJson("/api/config/llm", config);
+    configModal.classList.remove("active");
+  } catch (err) {
+    console.error("Failed to save LLM config:", err);
+    alert("Failed to save configuration");
+  }
+}
+
+settingsGear.addEventListener("click", () => {
+  loadLlmConfig();
+  configModal.classList.add("active");
+});
+
+btnCloseConfig.addEventListener("click", () => {
+  configModal.classList.remove("active");
+});
+
+configModal.addEventListener("click", (e) => {
+  if (e.target === configModal) {
+    configModal.classList.remove("active");
+  }
+});
+
+configTempSlider.addEventListener("input", () => {
+  configTempValue.textContent = configTempSlider.value;
+});
+
+btnSaveConfig.addEventListener("click", saveLlmConfig);

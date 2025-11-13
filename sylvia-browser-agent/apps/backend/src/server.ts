@@ -19,6 +19,7 @@ import {
 } from "./automations";
 import { runCommandBySlug } from "./commandApi";
 import { startScheduler } from "./scheduler";
+import { getLlmConfig, updateLlmConfig } from "./config";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -29,6 +30,17 @@ app.use(express.json({ limit: "2mb" }));
 // Health check
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "sylvia-backend" });
+});
+
+// LLM Configuration
+app.get("/api/config/llm", (_req, res) => {
+  res.json({ ok: true, config: getLlmConfig() });
+});
+
+app.post("/api/config/llm", (req, res) => {
+  const { model, temperature } = req.body || {};
+  const config = updateLlmConfig({ model, temperature });
+  res.json({ ok: true, config });
 });
 
 // Basic chat endpoint
@@ -106,7 +118,7 @@ app.get("/api/automations", (_req, res) => {
 app.post("/api/automations", (req, res) => {
   const body = req.body as Automation;
   if (!body.id) {
-    body.id = `auto-${Date.now()}`;
+    body.id = "auto-" + Date.now();
   }
   body.enabled = body.enabled ?? true;
   saveAutomation(body);
@@ -122,6 +134,6 @@ app.delete("/api/automations/:id", (req, res) => {
 startScheduler();
 
 app.listen(port, () => {
-  console.log(`Sylvia backend listening on http://localhost:${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
+  console.log("Sylvia backend listening on http://localhost:" + port);
+  console.log("Health check: http://localhost:" + port + "/health");
 });
