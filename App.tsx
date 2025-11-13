@@ -19,6 +19,7 @@ import GamificationPage from './components/pages/GamificationPage';
 import PolarisPage from './components/pages/PolarisPage';
 import MemorySearchPage from './components/pages/MemorySearchPage';
 import EntityDetailPage from './components/pages/EntityDetailPage';
+import DeltaPage from './components/pages/DeltaPage';
 import LevelUpNotification from './components/LevelUpNotification';
 import { AppView } from './types';
 import { Menu, X, MessageSquare } from 'lucide-react';
@@ -114,6 +115,14 @@ const AppContent: React.FC = () => {
       description: 'Manage strategic goals',
       action: () => setActiveView(AppView.POLARIS),
       category: 'Navigation',
+    },
+    {
+      id: 'nav-delta',
+      label: 'Go to Delta Trading',
+      description: 'Evidence-based trading system',
+      action: () => setActiveView(AppView.DELTA),
+      category: 'Navigation',
+      keywords: ['trading', 'evidence', 'low', 'house'],
     },
     {
       id: 'nav-settings',
@@ -237,6 +246,8 @@ const AppContent: React.FC = () => {
         return <PolarisPage />;
       case AppView.SEARCH:
         return <MemorySearchPage />;
+      case AppView.DELTA:
+        return <DeltaPage />;
       case AppView.SETTINGS:
         return <SettingsView />;
     }

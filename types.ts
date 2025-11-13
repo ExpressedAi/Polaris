@@ -17,6 +17,7 @@ export enum AppView {
     GAMIFICATION = 'gamification',
     POLARIS = 'polaris',
     SEARCH = 'search',
+    DELTA = 'delta',
 }
 
 export interface FileAttachment {
@@ -247,4 +248,68 @@ export interface VendorTask {
     };
     createdAt: number;
     updatedAt?: number;
+}
+
+// Delta Trading System Types
+
+export type EGateStatus = 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
+export type PADStatus = 'potential' | 'actualized' | 'deployed';
+
+export interface StrategyState {
+    id: string;
+    name: string;
+    eGate: EGateStatus;
+    padStatus: PADStatus;
+    deltaH: number; // ΔH* evidence score
+    complexity: number;
+    lowScore: number; // LOW score = ΔH* - λ·Complexity
+    nullHypotheses: string[];
+    createdAt: number;
+    updatedAt?: number;
+}
+
+export interface LockState {
+    id: string;
+    strategyId: string;
+    lockType: 'phase-lock' | 'copl'; // Phase-lock or Cross-Ontological Phase-Lock
+    detected: boolean;
+    strength: number; // 0-1
+    description: string;
+    createdAt: number;
+}
+
+export interface HazardItem {
+    id: string;
+    symbol: string; // Ticker symbol
+    hazard: number; // h(t) = κ·ε·g·(1-ζ/ζ*)·u·p
+    kappa: number; // κ (regime factor)
+    epsilon: number; // ε (edge strength)
+    g: number; // g(e_φ) (phase-lock gain)
+    zeta: number; // ζ (current barrier)
+    zetaStar: number; // ζ* (critical threshold)
+    u: number; // u (urgency)
+    p: number; // p (precision)
+    recommendation: 'buy' | 'sell' | 'hold';
+    createdAt: number;
+}
+
+export interface DeltaState {
+    id: string;
+    strategies: StrategyState[];
+    locks: LockState[];
+    hazards: HazardItem[];
+    auditStats: {
+        totalStrategies: number;
+        e0Strategies: number;
+        e1Strategies: number;
+        e2Strategies: number;
+        e3Strategies: number;
+        e4Strategies: number;
+        potentialStrategies: number;
+        actualizedStrategies: number;
+        deployedStrategies: number;
+        avgDeltaH: number;
+        avgLowScore: number;
+    };
+    updatedAt: number;
 }

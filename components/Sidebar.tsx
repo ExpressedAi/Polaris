@@ -72,6 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
     { label: 'Calendar', view: AppView.CALENDAR, icon: <DocumentDuplicateIcon className="w-4 h-4" /> },
     { label: 'Pomodoro', view: AppView.POMODORO, icon: <PanelRightOpenIcon className="w-4 h-4" /> },
     { label: 'Polaris', view: AppView.POLARIS, icon: <SparklesIcon className="w-4 h-4" /> },
+    { label: 'Delta', view: AppView.DELTA, icon: <SparklesIcon className="w-4 h-4" /> },
     { label: 'Progress', view: AppView.GAMIFICATION, icon: <DocumentDuplicateIcon className="w-4 h-4" /> },
     { label: 'Brand', view: AppView.BRAND, icon: <SparklesIcon className="w-4 h-4" /> },
     { label: 'People', view: AppView.PEOPLE, icon: <DocumentDuplicateIcon className="w-4 h-4" /> },
