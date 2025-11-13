@@ -285,7 +285,7 @@ const CalendarPage: React.FC = () => {
       subtitle="Temporal anchors with rich context. Participants, locations, meeting links, and more for Sylvia's understanding."
     >
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <CalendarDays className="w-6 h-6 text-blue-600" />

@@ -5,12 +5,16 @@ import ActionAdmonition from './ActionAdmonition';
 import { SylviaEvent, drainSylviaEventQueue } from '../services/sylviaLog';
 import { Image, Search, Mic, Video, X, ChevronDown, Loader2 } from 'lucide-react';
 
-const SylviaPanel: React.FC = () => {
+interface SylviaPanelProps {
+  isMobile?: boolean;
+}
+
+const SylviaPanel: React.FC<SylviaPanelProps> = ({ isMobile = false }) => {
   const { currentThread, messages, sendMessage, updateThreadArtifact, activeView, primedAction, setPrimedAction, activeEntity, isLoading } = useAppContext();
   const [input, setInput] = useState('');
   const [artifactContent, setArtifactContent] = useState('');
   const [events, setEvents] = useState<SylviaEvent[]>([]);
-  
+
   // Resize state
   const [panelWidth, setPanelWidth] = useState(360);
   const [isResizing, setIsResizing] = useState(false);
@@ -172,11 +176,13 @@ const SylviaPanel: React.FC = () => {
     }
   };
 
-  // Resize handlers
+  // Resize handlers (disabled on mobile)
   useEffect(() => {
+    if (isMobile) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing || !panelRef.current) return;
-      
+
       const rect = panelRef.current.getBoundingClientRect();
       const newWidth = rect.right - e.clientX;
       const clampedWidth = Math.max(320, Math.min(800, newWidth));
@@ -200,7 +206,7 @@ const SylviaPanel: React.FC = () => {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isResizing]);
+  }, [isResizing, isMobile]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -240,18 +246,20 @@ const SylviaPanel: React.FC = () => {
   };
 
   return (
-    <aside 
+    <aside
       ref={panelRef}
-      className="glass-panel resizable-panel flex-shrink-0 rounded-[32px] flex flex-col border border-white/70 shadow-xl overflow-hidden"
-      style={{ width: `${panelWidth}px`, minWidth: '320px', maxWidth: '800px' }}
+      className={`glass-panel ${!isMobile ? 'resizable-panel' : ''} flex-shrink-0 ${!isMobile ? 'rounded-[32px]' : ''} flex flex-col border border-white/70 shadow-xl overflow-hidden ${isMobile ? 'w-full h-full' : ''}`}
+      style={!isMobile ? { width: `${panelWidth}px`, minWidth: '320px', maxWidth: '800px' } : undefined}
     >
-      <div 
-        className="resize-handle"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          setIsResizing(true);
-        }}
-      />
+      {!isMobile && (
+        <div
+          className="resize-handle"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsResizing(true);
+          }}
+        />
+      )}
       <div className="flex flex-col border-b border-white/70">
         <div className="flex items-center justify-between px-5 py-4">
           <div>
@@ -459,7 +467,7 @@ const SylviaPanel: React.FC = () => {
               )}
             </div>
             
-            <div className="rounded-3xl border border-white/80 bg-white flex items-end gap-2 px-4 py-3">
+            <div className={`rounded-3xl border border-white/80 bg-white flex items-end gap-2 ${isMobile ? 'px-3 py-3' : 'px-4 py-3'}`}>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -470,12 +478,12 @@ const SylviaPanel: React.FC = () => {
                   }
                 }}
                 placeholder={primedAction ? "Type your message here (will be sent as primed action)..." : "Send context or directives"}
-                className="flex-1 resize-none bg-transparent outline-none text-sm"
-                rows={2}
+                className={`flex-1 resize-none bg-transparent outline-none ${isMobile ? 'text-base' : 'text-sm'}`}
+                rows={isMobile ? 3 : 2}
               />
               <button
                 onClick={handleSend}
-                className="px-4 py-2 rounded-2xl bg-[#111827] text-white text-sm disabled:bg-gray-400"
+                className={`${isMobile ? 'px-5 py-3' : 'px-4 py-2'} rounded-2xl bg-[#111827] text-white text-sm font-medium disabled:bg-gray-400 transition-colors ${isMobile ? 'min-h-[44px]' : ''}`}
                 disabled={!input.trim() && !audioFile && !videoFile}
               >
                 Send

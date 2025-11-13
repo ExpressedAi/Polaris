@@ -226,7 +226,7 @@ const GamificationPage: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Journal Entries', value: stats.journalEntries, Icon: FileText, color: 'from-blue-50 to-blue-100' },
           { label: 'Agenda Items', value: stats.agendaItems, Icon: CheckCircle2, color: 'from-green-50 to-green-100' },
@@ -250,7 +250,7 @@ const GamificationPage: React.FC = () => {
           <span>Achievements</span>
           <span className="text-sm font-normal text-secondary-light">({achievements.length} / {ACHIEVEMENTS.length})</span>
         </h3>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {ACHIEVEMENTS.map(achievement => {
             const isUnlocked = achievements.includes(achievement.id);
             return (
@@ -290,7 +290,7 @@ const GamificationPage: React.FC = () => {
       </div>
 
       {/* XP Breakdown & Activity */}
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* XP Breakdown */}
         <div className="glass-panel rounded-3xl border border-white/70 p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">

@@ -31,7 +31,11 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive }) => (
 );
 
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
   const {
     threads,
     currentThread,
@@ -46,11 +50,18 @@ const Sidebar: React.FC = () => {
   const handleNewThread = async () => {
     await createThread();
     setActiveView(AppView.CHAT);
+    onNavigate?.();
   };
 
   const handleThreadClick = async (threadId: string) => {
     await selectThread(threadId);
     setActiveView(AppView.CHAT);
+    onNavigate?.();
+  };
+
+  const handleNavClick = (view: AppView) => {
+    setActiveView(view);
+    onNavigate?.();
   };
 
 
@@ -106,7 +117,7 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="glass-panel w-[260px] flex-shrink-0 rounded-[32px] rounded-l-none p-5 flex flex-col h-full max-h-full border border-white/70 shadow-xl overflow-hidden">
+      <aside className="glass-panel w-full lg:w-[260px] flex-shrink-0 lg:rounded-[32px] lg:rounded-l-none p-5 flex flex-col h-full max-h-full border border-white/70 shadow-xl overflow-hidden">
 
         <div className="space-y-2 mt-6 flex-shrink-0">
           <button onClick={handleNewThread} className="w-full">
@@ -125,7 +136,7 @@ const Sidebar: React.FC = () => {
           {showThreads && threadList}
           <div className="space-y-1">
             {workspaceNav.map((item) => (
-              <button key={item.view} onClick={() => setActiveView(item.view)} className="w-full">
+              <button key={item.view} onClick={() => handleNavClick(item.view)} className="w-full">
                 <NavItem icon={item.icon} label={item.label} isActive={activeView === item.view} />
               </button>
             ))}
@@ -135,7 +146,7 @@ const Sidebar: React.FC = () => {
 
         <div className="flex-shrink-0 pt-4 border-t border-white/60">
           <button
-            onClick={() => setActiveView(AppView.SETTINGS)}
+            onClick={() => handleNavClick(AppView.SETTINGS)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition ${
               activeView === AppView.SETTINGS
                 ? 'bg-black text-white shadow-lg'

@@ -438,7 +438,7 @@ Generate 10-12 tasks now. Focus on tasks that are HIGH IMPACT and LOW EFFORT. Us
       subtitle="North Star goals meet high-impact, low-effort tasks. Sylvia learns from every outcome to get better."
     >
       {/* Enhanced Stats Dashboard */}
-      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <Target className="w-6 h-6 text-blue-600" />
@@ -484,7 +484,7 @@ Generate 10-12 tasks now. Focus on tasks that are HIGH IMPACT and LOW EFFORT. Us
       </div>
 
       {/* Additional Stats Row */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="rounded-2xl border border-white/70 bg-gradient-to-br from-indigo-50 to-indigo-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="w-6 h-6 text-indigo-600" />
@@ -669,7 +669,7 @@ Generate 10-12 tasks now. Focus on tasks that are HIGH IMPACT and LOW EFFORT. Us
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredGoals.map(goal => {
               const goalTasks = tasks.filter(t => t.goalId === goal.id);
               const isEditing = editingGoal?.id === goal.id;

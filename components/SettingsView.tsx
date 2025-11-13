@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { AppView } from '../types';
 import { ChevronDownIcon, CheckIcon } from './Icons';
 import { clearAllData } from '../services/storage';
+import DarkModeToggle from './DarkModeToggle';
+import InsightsDashboard from './InsightsDashboard';
+import { downloadExport, parseImportFile, importData } from '../utils/exportImport';
+import { useToast } from '../hooks/useToast';
 
 const popularModels = [
     'openrouter/polaris-alpha',
@@ -39,11 +43,15 @@ const embeddingModels = [
 
 const SettingsView: React.FC = () => {
     const { settings, updateSetting, setActiveView } = useAppContext();
+    const { success, error: showError } = useToast();
     const [showApiKey, setShowApiKey] = useState(false);
     const [showAuxKey, setShowAuxKey] = useState(false);
     const [showAuditKey, setShowAuditKey] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     return (
         <div className="flex flex-col h-full">
@@ -431,6 +439,112 @@ const SettingsView: React.FC = () => {
                             </div>
                         ))}
                     </div>
+                </section>
+
+                {/* Appearance Section */}
+                <section className="glass-panel rounded-[32px] border border-white/70 dark:border-white/10 p-6 shadow-xl space-y-4">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-secondary-light dark:text-secondary-dark">Personalization</p>
+                        <h2 className="text-xl font-semibold mt-1">Appearance</h2>
+                        <p className="text-sm text-secondary-light dark:text-secondary-dark">
+                            Customize how Polaris looks and feels.
+                        </p>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-white/70 dark:border-white/10 bg-white/50 dark:bg-gray-900/50">
+                        <div className="flex-1">
+                            <label className="text-sm font-medium">Dark Mode</label>
+                            <p className="text-xs text-secondary-light dark:text-secondary-dark mt-1">
+                                Toggle between light and dark themes
+                            </p>
+                        </div>
+                        <DarkModeToggle />
+                    </div>
+                </section>
+
+                {/* Insights Dashboard */}
+                <section className="glass-panel rounded-[32px] border border-white/70 dark:border-white/10 p-6 shadow-xl space-y-4">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-secondary-light dark:text-secondary-dark">Analytics</p>
+                        <h2 className="text-xl font-semibold mt-1">Your Insights</h2>
+                        <p className="text-sm text-secondary-light dark:text-secondary-dark">
+                            Track your activity, progress, and streaks.
+                        </p>
+                    </div>
+                    <InsightsDashboard />
+                </section>
+
+                {/* Data Management Section */}
+                <section className="glass-panel rounded-[32px] border border-white/70 dark:border-white/10 p-6 shadow-xl space-y-4">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-secondary-light dark:text-secondary-dark">Backup & Restore</p>
+                        <h2 className="text-xl font-semibold mt-1">Data Management</h2>
+                        <p className="text-sm text-secondary-light dark:text-secondary-dark">
+                            Export your data for backup or import from a previous backup.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <button
+                            onClick={async () => {
+                                setIsExporting(true);
+                                try {
+                                    await downloadExport();
+                                    success('Data exported successfully!');
+                                } catch (err) {
+                                    showError('Failed to export data');
+                                } finally {
+                                    setIsExporting(false);
+                                }
+                            }}
+                            disabled={isExporting}
+                            className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isExporting ? 'Exporting...' : '📥 Export Data'}
+                        </button>
+
+                        <div>
+                            <input
+                                ref={importInputRef}
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    setIsImporting(true);
+                                    try {
+                                        const data = await parseImportFile(file);
+                                        const result = await importData(data, { merge: true, overwrite: false });
+                                        if (result.success) {
+                                            success('Data imported successfully!');
+                                            setTimeout(() => window.location.reload(), 1500);
+                                        } else {
+                                            showError(result.error || 'Failed to import data');
+                                        }
+                                    } catch (err) {
+                                        showError('Invalid backup file');
+                                    } finally {
+                                        setIsImporting(false);
+                                        if (importInputRef.current) {
+                                            importInputRef.current.value = '';
+                                        }
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => importInputRef.current?.click()}
+                                disabled={isImporting}
+                                className="w-full p-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isImporting ? 'Importing...' : '📤 Import Data'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <p className="text-xs text-secondary-light dark:text-secondary-dark">
+                        Import will merge new data with existing data. Existing records won't be overwritten.
+                    </p>
                 </section>
 
                 {/* Clear Everything Section */}
