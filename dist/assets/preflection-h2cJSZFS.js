@@ -1,4 +1,4 @@
-import{g as C,r as R,s as S}from"./index-dBaw5RoB.js";async function N(t,o,n,c,e,r,s){const p=await C(t),i=p.length,m=await R(o,5),l=m.length,h=P(o),u=(n==null?void 0:n.type)!==null&&(n==null?void 0:n.data)!==void 0,g=M(p,i),{topicCoherence:f,recentTopicShifts:a}=A(p,o),x=I(m,o),y=O(g,f,x,u),$={threadLength:i,memoryCount:l,hasActiveEntity:u,queryType:h,threadComplexity:g,topicCoherence:f,recentTopicShifts:a,memoryRelevance:x},w=`You are a context engineering system performing Preflection - dynamic instruction generation for an AI agent.
+import{g as C,r as R,s as S}from"./index-DG8L3NT6.js";async function N(t,o,n,c,e,r,s){const p=await C(t),i=p.length,m=await R(o,5),l=m.length,h=P(o),u=(n==null?void 0:n.type)!==null&&(n==null?void 0:n.data)!==void 0,g=M(p,i),{topicCoherence:f,recentTopicShifts:a}=A(p,o),x=I(m,o),y=O(g,f,x,u),$={threadLength:i,memoryCount:l,hasActiveEntity:u,queryType:h,threadComplexity:g,topicCoherence:f,recentTopicShifts:a,memoryRelevance:x},w=`You are a context engineering system performing Preflection - dynamic instruction generation for an AI agent.
 
 CONTEXT ANALYSIS:
 - Thread Length: ${i} messages

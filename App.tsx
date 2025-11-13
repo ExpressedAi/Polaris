@@ -1,6 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { ToastProvider, useToast } from './hooks/useToast';
+import ToastContainer from './components/Toast';
+import CommandPalette from './components/CommandPalette';
+import { useCommandPalette } from './hooks/useCommandPalette';
 import Sidebar from './components/Sidebar';
 import SylviaPanel from './components/SylviaPanel';
 import SettingsView from './components/SettingsView';
@@ -20,10 +24,106 @@ import { AppView } from './types';
 import { Menu, X, MessageSquare } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { activeView, entityDetailView } = useAppContext();
+  const { activeView, entityDetailView, setActiveView, createThread } = useAppContext();
+  const { toasts, dismissToast } = useToast();
+  const { isOpen: commandPaletteOpen, close: closeCommandPalette } = useCommandPalette();
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
+
+  // Command palette commands
+  const commands = useMemo(() => [
+    {
+      id: 'new-thread',
+      label: 'New Thread',
+      description: 'Start a new conversation with Sylvia',
+      action: () => {
+        createThread();
+        setActiveView(AppView.CHAT);
+      },
+      category: 'Actions',
+      keywords: ['chat', 'conversation', 'message'],
+    },
+    {
+      id: 'nav-search',
+      label: 'Go to Memory Search',
+      description: 'Search across all your data',
+      action: () => setActiveView(AppView.SEARCH),
+      category: 'Navigation',
+      keywords: ['find', 'lookup'],
+    },
+    {
+      id: 'nav-brand',
+      label: 'Go to Brand',
+      description: 'Manage brand identity and voice',
+      action: () => setActiveView(AppView.BRAND),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-people',
+      label: 'Go to People',
+      description: 'Manage contacts and relationships',
+      action: () => setActiveView(AppView.PEOPLE),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-concepts',
+      label: 'Go to Concepts',
+      description: 'Explore ideas and technologies',
+      action: () => setActiveView(AppView.CONCEPTS),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-journal',
+      label: 'Go to Journal',
+      description: 'Write and review journal entries',
+      action: () => setActiveView(AppView.JOURNAL),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-agenda',
+      label: 'Go to Agenda',
+      description: 'Manage tasks and deliverables',
+      action: () => setActiveView(AppView.AGENDA),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-calendar',
+      label: 'Go to Calendar',
+      description: 'View and manage events',
+      action: () => setActiveView(AppView.CALENDAR),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-pomodoro',
+      label: 'Go to Pomodoro',
+      description: 'Track focus sessions',
+      action: () => setActiveView(AppView.POMODORO),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-gamification',
+      label: 'Go to Progress',
+      description: 'View achievements and XP',
+      action: () => setActiveView(AppView.GAMIFICATION),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-polaris',
+      label: 'Go to Polaris Goals',
+      description: 'Manage strategic goals',
+      action: () => setActiveView(AppView.POLARIS),
+      category: 'Navigation',
+    },
+    {
+      id: 'nav-settings',
+      label: 'Go to Settings',
+      description: 'Configure Polaris',
+      action: () => setActiveView(AppView.SETTINGS),
+      category: 'Navigation',
+      keywords: ['preferences', 'config'],
+    },
+  ], [createThread, setActiveView]);
 
   // Detect mobile screen size
   useEffect(() => {
@@ -145,6 +245,8 @@ const AppContent: React.FC = () => {
   return (
     <div className="h-screen w-full overflow-hidden bg-transparent text-primary-light font-sans">
       <LevelUpNotification />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <CommandPalette isOpen={commandPaletteOpen} onClose={closeCommandPalette} commands={commands} />
 
       {/* Mobile Header with Menu Buttons */}
       {isMobile && (
@@ -220,9 +322,11 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <AppProvider>
-    <AppContent />
-  </AppProvider>
+  <ToastProvider>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  </ToastProvider>
 );
 
 export default App;

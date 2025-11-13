@@ -1,0 +1,52 @@
+{
+  "name": "Polaris - Personal Intelligence Platform",
+  "short_name": "Polaris",
+  "description": "Your AI-powered personal workspace with Sylvia intelligence",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "New Thread",
+      "short_name": "New Thread",
+      "description": "Start a new conversation with Sylvia",
+      "url": "/?action=new-thread",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search your workspace",
+      "url": "/?view=search",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
