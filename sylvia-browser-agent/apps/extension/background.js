@@ -1,5 +1,31 @@
+// Store pending selection to pass to panel
+let pendingSelection = null;
+
 // Mediates between side panel and content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "OPEN_SIDEPANEL_WITH_SELECTION") {
+    // Store selection for panel to retrieve
+    pendingSelection = message.selection;
+
+    // Open side panel
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (tab && tab.windowId) {
+        chrome.sidePanel.open({ windowId: tab.windowId });
+      }
+    });
+
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (message.type === "GET_PENDING_SELECTION") {
+    const selection = pendingSelection;
+    pendingSelection = null; // Clear after retrieval
+    sendResponse({ ok: true, selection });
+    return true;
+  }
+
   if (message.type === "REQUEST_PAGE_CONTEXT") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
@@ -49,5 +75,24 @@ chrome.commands.onCommand.addListener((command) => {
       if (!tab || !tab.windowId) return;
       chrome.sidePanel.open({ windowId: tab.windowId });
     });
+  }
+});
+
+// Create context menu for text selection
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "ask-sylvia",
+    title: "Ask Sylvia about \"%s\"",
+    contexts: ["selection"]
+  });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "ask-sylvia" && info.selectionText) {
+    pendingSelection = info.selectionText;
+    if (tab && tab.windowId) {
+      chrome.sidePanel.open({ windowId: tab.windowId });
+    }
   }
 });

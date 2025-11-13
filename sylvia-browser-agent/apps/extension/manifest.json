@@ -3,7 +3,7 @@
   "name": "Sylvia Sidecar",
   "version": "0.1.0",
   "description": "Glassmorphism Sylvia browser side panel: summarize pages, create tasks, capture concepts.",
-  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "contextMenus"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",

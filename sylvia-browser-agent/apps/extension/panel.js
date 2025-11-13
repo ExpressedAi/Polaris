@@ -837,6 +837,35 @@ setStatus("Ready to analyze this page...");
 initNav();
 loadCommands();
 
+// Check for pending selection from quick action
+async function checkPendingSelection() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "GET_PENDING_SELECTION" });
+    if (response && response.ok && response.selection) {
+      // Populate chat input with selected text
+      chatInput.value = `Explain this: "${response.selection}"`;
+      chatInput.focus();
+
+      // Auto-scroll to chat if not already visible
+      const chatView = document.getElementById("view-chat");
+      if (!chatView.classList.contains("active")) {
+        // Switch to chat view
+        const tabs = document.querySelectorAll(".nav-tab");
+        tabs.forEach(t => t.classList.remove("nav-tab-active"));
+        document.querySelector('.nav-tab[data-view="chat"]').classList.add("nav-tab-active");
+
+        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+        chatView.classList.add("active");
+      }
+    }
+  } catch (err) {
+    // Silent fail - extension might not support runtime messaging yet
+    console.debug("No pending selection:", err);
+  }
+}
+
+checkPendingSelection();
+
 // ---------- Model Config Modal ----------
 
 const configModal = document.getElementById("config-modal");
