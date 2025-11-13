@@ -1,30 +1,10 @@
-// Standalone panel.js - No backend required!
-// Uses ChatGPT web interface + chrome.storage.local
-
 const statusEl = document.getElementById("status");
 const outputEl = document.getElementById("output");
 const chatInput = document.getElementById("chat-input");
 
-// Default commands (built-in)
-const DEFAULT_COMMANDS = [
-  {
-    slug: "summarize",
-    name: "Summarize Page",
-    template: "Summarize this page in 3-5 sentences:\n\nTitle: {{page.title}}\nURL: {{page.url}}\n\nContent:\n{{page.text}}"
-  },
-  {
-    slug: "tasks",
-    name: "Extract Tasks",
-    template: "Extract actionable tasks from this page. Return as JSON array with fields: title, description, effort, impact.\n\nTitle: {{page.title}}\nURL: {{page.url}}\n\nContent:\n{{page.text}}"
-  },
-  {
-    slug: "concept",
-    name: "Capture Concept",
-    template: "Extract the main concept from this page. Return as JSON with fields: title, category, notes.\n\nTitle: {{page.title}}\nURL: {{page.url}}\n\nContent:\n{{page.text}}"
-  }
-];
+const API_BASE = "http://localhost:4000";
 
-let cachedCommands = [...DEFAULT_COMMANDS];
+let cachedCommands = [];
 let cachedAutomations = [];
 
 // ---------- Shared helpers ----------
@@ -123,26 +103,30 @@ function showOutput(content, type = "text") {
   }
 }
 
-// ---------- ChatGPT Integration ----------
+async function postJson(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
 
-async function callChatGPT(prompt) {
-  try {
-    const response = await window.chatGPTClient.chat(prompt);
-    return response;
-  } catch (err) {
-    throw new Error(`ChatGPT error: ${err.message}`);
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Backend error ${res.status}: ${txt}`);
   }
+
+  return res.json();
 }
 
-// ---------- Template Processing ----------
-
-function fillTemplate(template, values) {
-  let result = template;
-  for (const [key, value] of Object.entries(values)) {
-    const placeholder = `{{${key}}}`;
-    result = result.replaceAll(placeholder, String(value));
+async function getJson(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Backend error ${res.status}: ${txt}`);
   }
-  return result;
+  return res.json();
 }
 
 // ---------- Chat view handlers ----------
@@ -157,15 +141,8 @@ async function handleSummary() {
   }
 
   try {
-    const command = DEFAULT_COMMANDS.find(c => c.slug === "summarize");
-    const prompt = fillTemplate(command.template, {
-      "page.title": page.title || "",
-      "page.url": page.url || "",
-      "page.text": (page.text || "").substring(0, 8000) // Limit to 8K chars
-    });
-
-    const summary = await callChatGPT(prompt);
-    showOutput(summary, "text");
+    const json = await postJson("/api/page/summary", { page });
+    showOutput(json.summary, "text");
     setStatus("✓ Summary complete");
   } catch (err) {
     console.error(err);
@@ -183,32 +160,18 @@ async function handleTasks() {
     return;
   }
 
+  const goal = {
+    id: "ad-hoc-goal",
+    title: "Ad-hoc goal from page",
+    description: "Temporary goal created from Sylvia Sidecar",
+    timeboxDays: 10
+  };
+
   try {
-    const command = DEFAULT_COMMANDS.find(c => c.slug === "tasks");
-    const prompt = fillTemplate(command.template, {
-      "page.title": page.title || "",
-      "page.url": page.url || "",
-      "page.text": (page.text || "").substring(0, 8000)
-    });
+    const json = await postJson("/api/page/tasks", { goal, page });
+    const tasks = json.tasks || [];
 
-    const response = await callChatGPT(prompt);
-
-    // Try to parse as JSON
-    let tasks;
-    try {
-      // Extract JSON from markdown code blocks if present
-      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) ||
-                       response.match(/```\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : response;
-      tasks = JSON.parse(jsonStr);
-    } catch (e) {
-      // If parsing fails, show as text
-      showOutput(response, "text");
-      setStatus("✓ Response received (not in expected format)");
-      return;
-    }
-
-    if (!Array.isArray(tasks) || tasks.length === 0) {
+    if (tasks.length === 0) {
       setStatus("No tasks generated.", "error");
       showOutput("No tasks were generated from this page.", "text");
       return;
@@ -258,29 +221,10 @@ async function handleConcept() {
   }
 
   try {
-    const command = DEFAULT_COMMANDS.find(c => c.slug === "concept");
-    const prompt = fillTemplate(command.template, {
-      "page.title": page.title || "",
-      "page.url": page.url || "",
-      "page.text": (page.text || "").substring(0, 8000)
-    });
+    const json = await postJson("/api/page/concept", { page });
+    const concept = json.concept;
 
-    const response = await callChatGPT(prompt);
-
-    // Try to parse as JSON
-    let concept;
-    try {
-      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) ||
-                       response.match(/```\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : response;
-      concept = JSON.parse(jsonStr);
-    } catch (e) {
-      showOutput(response, "text");
-      setStatus("✓ Response received (not in expected format)");
-      return;
-    }
-
-    if (!concept || !concept.title) {
+    if (!concept) {
       setStatus("No concept extracted.", "error");
       showOutput("No concept could be extracted from this page.", "text");
       return;
@@ -328,21 +272,14 @@ async function handleChat() {
   chatInput.value = "";
 
   const page = await getPageContext();
-
-  // Build prompt with page context
-  let prompt = msg;
-  if (page) {
-    prompt = `Context: Page "${page.title || 'Untitled'}" at ${page.url || 'unknown URL'}\n\nUser question: ${msg}`;
-
-    // Include page text if it seems relevant
-    if (msg.toLowerCase().includes("page") || msg.toLowerCase().includes("this")) {
-      prompt += `\n\nPage content (first 4000 chars):\n${(page.text || "").substring(0, 4000)}`;
-    }
-  }
+  const body = {
+    message: msg,
+    page: page || undefined
+  };
 
   try {
-    const reply = await callChatGPT(prompt);
-    showOutput(reply, "text");
+    const json = await postJson("/api/chat", body);
+    showOutput(json.reply, "text");
     setStatus("✓ Response received");
   } catch (err) {
     console.error(err);
@@ -362,8 +299,8 @@ const autoIntervalInput = document.getElementById("auto-interval");
 
 async function loadCommands() {
   try {
-    const customCommands = await Storage.getCustomCommands();
-    cachedCommands = [...DEFAULT_COMMANDS, ...customCommands];
+    const json = await getJson("/api/commands");
+    cachedCommands = json.commands || [];
 
     autoCommandSelect.innerHTML = "";
     cachedCommands.forEach((cmd) => {
@@ -374,6 +311,7 @@ async function loadCommands() {
     });
   } catch (err) {
     console.error(err);
+    // Soft fail, automations still usable if commands are cached later
   }
 }
 
@@ -466,10 +404,12 @@ function renderAutomations() {
 
 async function loadAutomations() {
   try {
-    cachedAutomations = await Storage.getAutomations();
+    const json = await getJson("/api/automations");
+    cachedAutomations = json.automations || [];
     renderAutomations();
   } catch (err) {
     console.error(err);
+    // best-effort; can show toast in status if you want
   }
 }
 
@@ -492,8 +432,7 @@ async function createAutomation(e) {
     targetUrl = page.url;
   }
 
-  const automation = {
-    id: "auto-" + Date.now(),
+  const body = {
     name,
     commandSlug: slug,
     targetUrl,
@@ -502,13 +441,10 @@ async function createAutomation(e) {
   };
 
   try {
-    await Storage.saveAutomation(automation);
+    await postJson("/api/automations", body);
     autoNameInput.value = "";
     autoUrlInput.value = "";
     await loadAutomations();
-
-    // Schedule the automation
-    scheduleAutomation(automation);
   } catch (err) {
     console.error(err);
     alert("Error creating automation. See console for details.");
@@ -516,18 +452,13 @@ async function createAutomation(e) {
 }
 
 async function toggleAutomation(auto, enabled) {
-  const updated = { ...auto, enabled };
-
+  const body = {
+    ...auto,
+    enabled
+  };
   try {
-    await Storage.saveAutomation(updated);
+    await postJson("/api/automations", body);
     await loadAutomations();
-
-    // Update schedule
-    if (enabled) {
-      scheduleAutomation(updated);
-    } else {
-      unscheduleAutomation(updated.id);
-    }
   } catch (err) {
     console.error(err);
   }
@@ -537,31 +468,11 @@ async function deleteAutomation(id) {
   if (!confirm("Delete this automation?")) return;
 
   try {
-    await Storage.deleteAutomation(id);
-    unscheduleAutomation(id);
+    await fetch(`${API_BASE}/api/automations/${id}`, { method: "DELETE" });
     await loadAutomations();
   } catch (err) {
     console.error(err);
   }
-}
-
-// ---------- Automation Scheduling (chrome.alarms) ----------
-
-function scheduleAutomation(automation) {
-  if (!automation.enabled || !automation.trigger) return;
-
-  const alarmName = `automation-${automation.id}`;
-
-  if (automation.trigger.type === "interval") {
-    chrome.alarms.create(alarmName, {
-      periodInMinutes: automation.trigger.minutes
-    });
-  }
-}
-
-function unscheduleAutomation(automationId) {
-  const alarmName = `automation-${automationId}`;
-  chrome.alarms.clear(alarmName);
 }
 
 // ---------- Results View ----------
@@ -576,13 +487,16 @@ async function loadResults(reset = true) {
   }
 
   try {
-    const data = await Storage.getResults({
-      limit: RESULTS_LIMIT,
-      offset: currentResultsOffset
-    });
+    const url = `${API_BASE}/api/automations/results?limit=${RESULTS_LIMIT}&offset=${currentResultsOffset}`;
+    const response = await fetch(url);
+    const json = await response.json();
 
-    hasMoreResults = data.hasMore || false;
-    renderResults(data.results || [], reset);
+    if (!json.ok) {
+      throw new Error("Failed to load results");
+    }
+
+    hasMoreResults = json.hasMore || false;
+    renderResults(json.results || [], reset);
 
     // Show/hide load more button
     const loadMoreDiv = document.getElementById("results-load-more");
@@ -703,7 +617,8 @@ let editingCommandSlug = null;
 
 async function loadCustomCommands() {
   try {
-    const commands = await Storage.getCustomCommands();
+    const json = await getJson("/api/commands/custom");
+    const commands = json.commands || [];
     renderCustomCommands(commands);
   } catch (err) {
     console.error("Error loading custom commands:", err);
@@ -798,17 +713,8 @@ function resetCommandForm() {
 async function saveCommand(e) {
   e.preventDefault();
 
-  const slug = commandSlugInput.value.trim().toLowerCase();
-
-  // Check if trying to override default command
-  const isDefaultCommand = DEFAULT_COMMANDS.some(c => c.slug === slug);
-  if (isDefaultCommand && !editingCommandSlug) {
-    alert("Cannot override default commands. Choose a different slug.");
-    return;
-  }
-
   const command = {
-    slug,
+    slug: commandSlugInput.value.trim().toLowerCase(),
     name: commandNameInput.value.trim(),
     description: commandDescInput.value.trim() || undefined,
     template: commandTemplateInput.value.trim(),
@@ -816,7 +722,12 @@ async function saveCommand(e) {
   };
 
   try {
-    await Storage.saveCustomCommand(command);
+    const json = await postJson("/api/commands/custom", command);
+    if (!json.ok) {
+      alert(json.error || "Failed to save command");
+      return;
+    }
+
     resetCommandForm();
     await loadCustomCommands();
     await loadCommands(); // Refresh the automation command dropdown
@@ -830,7 +741,16 @@ async function deleteCommand(slug) {
   if (!confirm(`Delete command "${slug}"?`)) return;
 
   try {
-    await Storage.deleteCustomCommand(slug);
+    const response = await fetch(`${API_BASE}/api/commands/custom/${slug}`, {
+      method: "DELETE"
+    });
+    const json = await response.json();
+
+    if (!json.ok) {
+      alert(json.error || "Failed to delete command");
+      return;
+    }
+
     await loadCustomCommands();
     await loadCommands(); // Refresh the automation command dropdown
   } catch (err) {
@@ -958,10 +878,12 @@ const configTempValue = document.getElementById("config-temperature-value");
 
 async function loadLlmConfig() {
   try {
-    const config = await Storage.getLlmConfig();
-    configModelSelect.value = config.model || "gpt-4";
-    configTempSlider.value = config.temperature || 0.4;
-    configTempValue.textContent = configTempSlider.value;
+    const json = await getJson("/api/config/llm");
+    if (json.ok && json.config) {
+      configModelSelect.value = json.config.model || "gpt-4o-mini";
+      configTempSlider.value = json.config.temperature || 0.4;
+      configTempValue.textContent = configTempSlider.value;
+    }
   } catch (err) {
     console.error("Failed to load LLM config:", err);
   }
@@ -969,10 +891,11 @@ async function loadLlmConfig() {
 
 async function saveLlmConfig() {
   try {
-    await Storage.updateLlmConfig({
+    const config = {
       model: configModelSelect.value,
       temperature: parseFloat(configTempSlider.value)
-    });
+    };
+    await postJson("/api/config/llm", config);
     configModal.classList.remove("active");
   } catch (err) {
     console.error("Failed to save LLM config:", err);
@@ -1028,6 +951,3 @@ async function sendConceptToPolaris(concept) {
 // Store last generated tasks/concept for Polaris export
 let lastGeneratedTasks = [];
 let lastGeneratedConcept = null;
-
-console.log("✨ Sylvia Sidecar (Standalone Mode) - Ready!");
-console.log("Using ChatGPT Pro web interface - no backend required!");
