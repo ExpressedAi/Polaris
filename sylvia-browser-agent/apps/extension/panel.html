@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sylvia Sidecar</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="top-bar">
+        <div class="logo">Sylvia<span>Sidecar</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div id="goal-label">No goal set</div>
+          <span id="settings-gear" class="settings-gear" title="Settings">⚙️</span>
+        </div>
+      </header>
+
+      <nav class="nav">
+        <button class="nav-tab nav-tab-active" data-view="chat">Chat</button>
+        <button class="nav-tab" data-view="automations">Automations</button>
+        <button class="nav-tab" data-view="results">Results</button>
+        <button class="nav-tab" data-view="commands">Commands</button>
+      </nav>
+
+      <main class="main">
+        <!-- Chat view -->
+        <div class="view view-chat active" id="view-chat">
+          <div class="controls">
+            <button id="btn-summary" class="btn btn-primary">✨ Summarize</button>
+            <button id="btn-tasks" class="btn">✓ Tasks</button>
+            <button id="btn-concept" class="btn">💡 Concept</button>
+          </div>
+
+          <div class="status" id="status">Ready to analyze this page...</div>
+
+          <section class="output" id="output">
+            <div class="empty-state">
+              <div class="empty-icon">🚀</div>
+              <div class="empty-text">Click a button to interact with this page</div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Automations view -->
+        <div class="view view-automations" id="view-automations">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Automations</h2>
+              <button id="btn-refresh-autos" class="btn btn-ghost">↻ Refresh</button>
+            </div>
+
+            <div id="auto-list" class="auto-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div class="auto-divider"></div>
+
+            <form id="auto-form" class="auto-form">
+              <h3>Create automation</h3>
+
+              <label class="field">
+                <span class="field-label">Name</span>
+                <input
+                  type="text"
+                  id="auto-name"
+                  placeholder="e.g. Monitor this docs page"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Target URL</span>
+                <input
+                  type="url"
+                  id="auto-url"
+                  placeholder="Defaults to current page if empty"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Command</span>
+                <select id="auto-command" required>
+                  <!-- Options filled from /api/commands -->
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Interval (minutes)</span>
+                <input
+                  type="number"
+                  id="auto-interval"
+                  min="1"
+                  step="1"
+                  value="60"
+                  required
+                />
+              </label>
+
+              <button type="submit" class="btn btn-primary full-width">
+                + Create automation
+              </button>
+            </form>
+          </section>
+        </div>
+
+        <!-- Results view -->
+        <div class="view view-results" id="view-results">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Automation Results</h2>
+              <button id="btn-refresh-results" class="btn btn-ghost">↻ Refresh</button>
+            </div>
+
+            <div id="results-list" class="results-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div id="results-empty" class="empty-state" style="display: none;">
+              <div class="empty-icon">📋</div>
+              <div class="empty-text">No results yet. Automations will appear here when they run.</div>
+            </div>
+
+            <div id="results-load-more" style="text-align: center; margin-top: 16px; display: none;">
+              <button id="btn-load-more-results" class="btn btn-ghost">Load More</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Commands view -->
+        <div class="view view-commands" id="view-commands">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Custom Commands</h2>
+              <button id="btn-refresh-commands" class="btn btn-ghost">↻ Refresh</button>
+            </div>
+
+            <div id="commands-list" class="commands-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div id="commands-empty" class="empty-state" style="display: none;">
+              <div class="empty-icon">⚡</div>
+              <div class="empty-text">No custom commands yet. Create one below!</div>
+            </div>
+
+            <div class="auto-divider"></div>
+
+            <form id="command-form" class="auto-form">
+              <h3 id="command-form-title">Create custom command</h3>
+
+              <label class="field">
+                <span class="field-label">Slug (unique identifier)</span>
+                <input
+                  type="text"
+                  id="command-slug"
+                  placeholder="e.g. extract-contacts"
+                  required
+                  pattern="[a-z0-9-]+"
+                  title="Lowercase letters, numbers, and hyphens only"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Name</span>
+                <input
+                  type="text"
+                  id="command-name"
+                  placeholder="e.g. Extract Contact Information"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Description (optional)</span>
+                <input
+                  type="text"
+                  id="command-description"
+                  placeholder="Short description of what this command does"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Template</span>
+                <textarea
+                  id="command-template"
+                  rows="6"
+                  placeholder="Use {{page.title}}, {{page.url}}, {{page.text}} in your prompt..."
+                  required
+                  style="font-family: 'SF Mono', Monaco, monospace; font-size: 10px; resize: vertical;"
+                ></textarea>
+                <div class="template-hint">
+                  💡 Variables: {{page.title}}, {{page.url}}, {{page.text}}
+                </div>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Model (optional)</span>
+                <select id="command-model">
+                  <option value="">Use default</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="gpt-4o">GPT-4o</option>
+                </select>
+              </label>
+
+              <button type="submit" class="btn btn-primary full-width">
+                <span id="command-submit-text">+ Create command</span>
+              </button>
+              <button type="button" id="btn-cancel-command" class="btn btn-ghost full-width" style="display: none;">
+                Cancel
+              </button>
+            </form>
+          </section>
+        </div>
+      </main>
+
+      <footer class="bottom">
+        <textarea
+          id="chat-input"
+          rows="2"
+          placeholder="Ask Sylvia about this page…"
+        ></textarea>
+        <button id="btn-chat" class="btn btn-accent">→</button>
+      </footer>
+    </div>
+
+    <!-- Model Config Modal -->
+    <div id="config-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>AI Model Configuration</h3>
+          <button id="btn-close-config" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <label class="field">
+            <span class="field-label">Model</span>
+            <select id="config-model">
+              <option value="gpt-4o-mini">GPT-4o Mini (Fast & Cheap)</option>
+              <option value="gpt-4o">GPT-4o (Smarter & More Expensive)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field-label">Temperature: <span id="config-temperature-value">0.4</span></span>
+            <input type="range" id="config-temperature" min="0" max="1" step="0.1" value="0.4" />
+          </label>
+          <button id="btn-save-config" class="btn btn-primary full-width">Save Configuration</button>
+          <p class="config-note">Note: Model preference saved. Custom commands can override model selection.</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="panel.js"></script>
+  </body>
+</html>
