@@ -19,6 +19,7 @@
       <nav class="nav">
         <button class="nav-tab nav-tab-active" data-view="chat">Chat</button>
         <button class="nav-tab" data-view="automations">Automations</button>
+        <button class="nav-tab" data-view="results">Results</button>
       </nav>
 
       <main class="main">
@@ -99,6 +100,29 @@
                 + Create automation
               </button>
             </form>
+          </section>
+        </div>
+
+        <!-- Results view -->
+        <div class="view view-results" id="view-results">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Automation Results</h2>
+              <button id="btn-refresh-results" class="btn btn-ghost">↻ Refresh</button>
+            </div>
+
+            <div id="results-list" class="results-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div id="results-empty" class="empty-state" style="display: none;">
+              <div class="empty-icon">📋</div>
+              <div class="empty-text">No results yet. Automations will appear here when they run.</div>
+            </div>
+
+            <div id="results-load-more" style="text-align: center; margin-top: 16px; display: none;">
+              <button id="btn-load-more-results" class="btn btn-ghost">Load More</button>
+            </div>
           </section>
         </div>
       </main>

@@ -475,12 +475,139 @@ async function deleteAutomation(id) {
   }
 }
 
+// ---------- Results View ----------
+
+let currentResultsOffset = 0;
+const RESULTS_LIMIT = 20;
+let hasMoreResults = false;
+
+async function loadResults(reset = true) {
+  if (reset) {
+    currentResultsOffset = 0;
+  }
+
+  try {
+    const url = `${API_BASE}/api/automations/results?limit=${RESULTS_LIMIT}&offset=${currentResultsOffset}`;
+    const response = await fetch(url);
+    const json = await response.json();
+
+    if (!json.ok) {
+      throw new Error("Failed to load results");
+    }
+
+    hasMoreResults = json.hasMore || false;
+    renderResults(json.results || [], reset);
+
+    // Show/hide load more button
+    const loadMoreDiv = document.getElementById("results-load-more");
+    if (hasMoreResults) {
+      loadMoreDiv.style.display = "block";
+    } else {
+      loadMoreDiv.style.display = "none";
+    }
+  } catch (err) {
+    console.error("Error loading results:", err);
+  }
+}
+
+function renderResults(results, reset = true) {
+  const resultsList = document.getElementById("results-list");
+  const emptyState = document.getElementById("results-empty");
+
+  if (reset) {
+    resultsList.innerHTML = "";
+  }
+
+  if (results.length === 0 && reset) {
+    resultsList.style.display = "none";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  resultsList.style.display = "flex";
+  emptyState.style.display = "none";
+
+  results.forEach(result => {
+    const card = createResultCard(result);
+    resultsList.appendChild(card);
+  });
+}
+
+function createResultCard(result) {
+  const card = document.createElement("div");
+  card.className = "result-card";
+  card.dataset.id = result.id;
+
+  const timestamp = new Date(result.timestamp).toLocaleString();
+  const duration = result.durationMs ? `${result.durationMs}ms` : "N/A";
+  const statusClass = result.success ? "success" : "error";
+  const statusText = result.success ? "Success" : "Error";
+
+  card.innerHTML = `
+    <div class="result-header">
+      <div class="result-info">
+        <div class="result-name">${escapeHtml(result.automationName)}</div>
+        <div class="result-meta">
+          <span>${timestamp}</span>
+          <span>•</span>
+          <span>${escapeHtml(result.commandSlug)}</span>
+          <span>•</span>
+          <span>${duration}</span>
+        </div>
+      </div>
+      <div>
+        <span class="result-status ${statusClass}">${statusText}</span>
+        <span class="result-expand-icon">▼</span>
+      </div>
+    </div>
+    <div class="result-details">
+      ${result.input ? `
+        <div class="result-section">
+          <div class="result-section-title">Input</div>
+          <div class="result-output">${escapeHtml(JSON.stringify(result.input, null, 2))}</div>
+        </div>
+      ` : ""}
+      ${result.success && result.output ? `
+        <div class="result-section">
+          <div class="result-section-title">Output</div>
+          <div class="result-output">${escapeHtml(typeof result.output === "string" ? result.output : JSON.stringify(result.output, null, 2))}</div>
+        </div>
+      ` : ""}
+      ${!result.success && result.error ? `
+        <div class="result-section">
+          <div class="result-section-title">Error</div>
+          <div class="result-output result-error">${escapeHtml(result.error)}</div>
+        </div>
+      ` : ""}
+    </div>
+  `;
+
+  // Toggle expand on click
+  card.addEventListener("click", () => {
+    card.classList.toggle("expanded");
+  });
+
+  return card;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function loadMoreResults() {
+  currentResultsOffset += RESULTS_LIMIT;
+  await loadResults(false);
+}
+
 // ---------- Nav / view switching ----------
 
 function initNav() {
   const tabs = Array.from(document.querySelectorAll(".nav-tab"));
   const chatView = document.getElementById("view-chat");
   const autoView = document.getElementById("view-automations");
+  const resultsView = document.getElementById("view-results");
 
   function activate(view) {
     tabs.forEach((t) => t.classList.remove("nav-tab-active"));
@@ -490,6 +617,7 @@ function initNav() {
 
     chatView.classList.toggle("active", view === "chat");
     autoView.classList.toggle("active", view === "automations");
+    resultsView.classList.toggle("active", view === "results");
   }
 
   tabs.forEach((tab) => {
@@ -498,6 +626,8 @@ function initNav() {
       activate(view);
       if (view === "automations") {
         loadAutomations();
+      } else if (view === "results") {
+        loadResults();
       }
     });
   });
@@ -524,6 +654,14 @@ document
   .getElementById("btn-refresh-autos")
   .addEventListener("click", loadAutomations);
 autoForm.addEventListener("submit", createAutomation);
+
+// Results
+document
+  .getElementById("btn-refresh-results")
+  .addEventListener("click", () => loadResults(true));
+document
+  .getElementById("btn-load-more-results")
+  .addEventListener("click", loadMoreResults);
 
 // Init
 setStatus("Ready to analyze this page...");

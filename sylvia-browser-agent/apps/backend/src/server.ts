@@ -20,6 +20,7 @@ import {
 import { runCommandBySlug } from "./commandApi";
 import { startScheduler } from "./scheduler";
 import { getLlmConfig, updateLlmConfig } from "./config";
+import { getResults, clearResults, getResultById } from "./results";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -127,6 +128,30 @@ app.post("/api/automations", (req, res) => {
 
 app.delete("/api/automations/:id", (req, res) => {
   deleteAutomation(req.params.id);
+  res.json({ ok: true });
+});
+
+// Automation results endpoints
+app.get("/api/automations/results", (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const automationId = req.query.automationId as string | undefined;
+
+  const data = getResults({ limit, offset, automationId });
+  res.json({ ok: true, ...data });
+});
+
+app.get("/api/automations/results/:id", (req, res) => {
+  const result = getResultById(req.params.id);
+  if (!result) {
+    return res.status(404).json({ ok: false, error: "Result not found" });
+  }
+  res.json({ ok: true, result });
+});
+
+app.delete("/api/automations/results", (req, res) => {
+  const automationId = req.query.automationId as string | undefined;
+  clearResults(automationId);
   res.json({ ok: true });
 });
 
