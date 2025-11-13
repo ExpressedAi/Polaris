@@ -177,7 +177,32 @@ async function handleTasks() {
       return;
     }
 
+    lastGeneratedTasks = tasks; // Store for Polaris export
     showOutput(tasks, "tasks");
+
+    // Add "Send to Polaris" button
+    const polarisBtn = document.createElement("button");
+    polarisBtn.className = "btn btn-accent full-width";
+    polarisBtn.style.marginTop = "8px";
+    polarisBtn.textContent = "→ Send to Polaris";
+    polarisBtn.addEventListener("click", async () => {
+      try {
+        polarisBtn.disabled = true;
+        polarisBtn.textContent = "Sending...";
+        await sendTasksToPolaris(lastGeneratedTasks);
+        polarisBtn.textContent = "✓ Sent to Polaris!";
+        setTimeout(() => {
+          polarisBtn.textContent = "→ Send to Polaris";
+          polarisBtn.disabled = false;
+        }, 2000);
+      } catch (e) {
+        console.error(e);
+        polarisBtn.textContent = "✗ Failed (check console)";
+        polarisBtn.disabled = false;
+      }
+    });
+    outputEl.appendChild(polarisBtn);
+
     setStatus(`✓ Generated ${tasks.length} tasks`);
   } catch (err) {
     console.error(err);
@@ -205,7 +230,32 @@ async function handleConcept() {
       return;
     }
 
+    lastGeneratedConcept = concept; // Store for Polaris export
     showOutput(concept, "concept");
+
+    // Add "Save to Polaris" button
+    const polarisBtn = document.createElement("button");
+    polarisBtn.className = "btn btn-accent full-width";
+    polarisBtn.style.marginTop = "8px";
+    polarisBtn.textContent = "→ Save to Polaris";
+    polarisBtn.addEventListener("click", async () => {
+      try {
+        polarisBtn.disabled = true;
+        polarisBtn.textContent = "Saving...";
+        await sendConceptToPolaris(lastGeneratedConcept);
+        polarisBtn.textContent = "✓ Saved to Polaris!";
+        setTimeout(() => {
+          polarisBtn.textContent = "→ Save to Polaris";
+          polarisBtn.disabled = false;
+        }, 2000);
+      } catch (e) {
+        console.error(e);
+        polarisBtn.textContent = "✗ Failed (check console)";
+        polarisBtn.disabled = false;
+      }
+    });
+    outputEl.appendChild(polarisBtn);
+
     setStatus("✓ Concept captured");
   } catch (err) {
     console.error(err);
@@ -537,3 +587,31 @@ configTempSlider.addEventListener("input", () => {
 });
 
 btnSaveConfig.addEventListener("click", saveLlmConfig);
+
+// ---------- Polaris Integration ----------
+
+const POLARIS_API_BASE = "http://localhost:3000"; // Configure for your Polaris backend
+
+async function sendTasksToPolaris(tasks) {
+  const res = await fetch(`${POLARIS_API_BASE}/api/sylvia/tasks/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tasks })
+  });
+  if (!res.ok) throw new Error("Failed to send tasks to Polaris");
+  return res.json();
+}
+
+async function sendConceptToPolaris(concept) {
+  const res = await fetch(`${POLARIS_API_BASE}/api/sylvia/concepts/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ concept })
+  });
+  if (!res.ok) throw new Error("Failed to send concept to Polaris");
+  return res.json();
+}
+
+// Store last generated tasks/concept for Polaris export
+let lastGeneratedTasks = [];
+let lastGeneratedConcept = null;
