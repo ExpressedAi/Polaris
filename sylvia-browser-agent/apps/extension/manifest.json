@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Sylvia Sidecar",
-  "version": "0.1.0",
-  "description": "Glassmorphism Sylvia browser side panel: summarize pages, create tasks, capture concepts.",
-  "permissions": ["activeTab", "scripting", "sidePanel", "contextMenus"],
+  "version": "0.2.0",
+  "description": "Glassmorphism Sylvia browser side panel: summarize pages, create tasks, capture concepts using your ChatGPT Pro account.",
+  "permissions": ["activeTab", "scripting", "sidePanel", "contextMenus", "storage", "alarms", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
@@ -16,6 +16,12 @@
     {
       "matches": ["<all_urls>"],
       "js": ["contentScript.js"],
+      "run_at": "document_idle",
+      "exclude_matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"]
+    },
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["chatgptContentScript.js"],
       "run_at": "document_idle"
     }
   ],

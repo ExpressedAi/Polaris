@@ -1,3 +1,6 @@
+// Import storage and ChatGPT client
+importScripts("storage.js", "chatgptClient.js");
+
 // Store pending selection to pass to panel
 let pendingSelection = null;
 
