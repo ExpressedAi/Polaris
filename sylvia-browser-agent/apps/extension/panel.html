@@ -20,6 +20,7 @@
         <button class="nav-tab nav-tab-active" data-view="chat">Chat</button>
         <button class="nav-tab" data-view="automations">Automations</button>
         <button class="nav-tab" data-view="results">Results</button>
+        <button class="nav-tab" data-view="commands">Commands</button>
       </nav>
 
       <main class="main">
@@ -123,6 +124,92 @@
             <div id="results-load-more" style="text-align: center; margin-top: 16px; display: none;">
               <button id="btn-load-more-results" class="btn btn-ghost">Load More</button>
             </div>
+          </section>
+        </div>
+
+        <!-- Commands view -->
+        <div class="view view-commands" id="view-commands">
+          <section class="auto-section">
+            <div class="auto-header">
+              <h2>Custom Commands</h2>
+              <button id="btn-refresh-commands" class="btn btn-ghost">↻ Refresh</button>
+            </div>
+
+            <div id="commands-list" class="commands-list">
+              <!-- Filled by JS -->
+            </div>
+
+            <div id="commands-empty" class="empty-state" style="display: none;">
+              <div class="empty-icon">⚡</div>
+              <div class="empty-text">No custom commands yet. Create one below!</div>
+            </div>
+
+            <div class="auto-divider"></div>
+
+            <form id="command-form" class="auto-form">
+              <h3 id="command-form-title">Create custom command</h3>
+
+              <label class="field">
+                <span class="field-label">Slug (unique identifier)</span>
+                <input
+                  type="text"
+                  id="command-slug"
+                  placeholder="e.g. extract-contacts"
+                  required
+                  pattern="[a-z0-9-]+"
+                  title="Lowercase letters, numbers, and hyphens only"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Name</span>
+                <input
+                  type="text"
+                  id="command-name"
+                  placeholder="e.g. Extract Contact Information"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Description (optional)</span>
+                <input
+                  type="text"
+                  id="command-description"
+                  placeholder="Short description of what this command does"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Template</span>
+                <textarea
+                  id="command-template"
+                  rows="6"
+                  placeholder="Use {{page.title}}, {{page.url}}, {{page.text}} in your prompt..."
+                  required
+                  style="font-family: 'SF Mono', Monaco, monospace; font-size: 10px; resize: vertical;"
+                ></textarea>
+                <div class="template-hint">
+                  💡 Variables: {{page.title}}, {{page.url}}, {{page.text}}
+                </div>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Model (optional)</span>
+                <select id="command-model">
+                  <option value="">Use default</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="gpt-4o">GPT-4o</option>
+                </select>
+              </label>
+
+              <button type="submit" class="btn btn-primary full-width">
+                <span id="command-submit-text">+ Create command</span>
+              </button>
+              <button type="button" id="btn-cancel-command" class="btn btn-ghost full-width" style="display: none;">
+                Cancel
+              </button>
+            </form>
           </section>
         </div>
       </main>

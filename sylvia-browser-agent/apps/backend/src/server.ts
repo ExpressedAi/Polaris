@@ -21,6 +21,14 @@ import { runCommandBySlug } from "./commandApi";
 import { startScheduler } from "./scheduler";
 import { getLlmConfig, updateLlmConfig } from "./config";
 import { getResults, clearResults, getResultById } from "./results";
+import {
+  listCustomCommands,
+  getCustomCommand,
+  saveCustomCommand,
+  deleteCustomCommand,
+  commandExists,
+  CustomCommand
+} from "./customCommands";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -93,9 +101,10 @@ app.post("/api/page/concept", async (req, res) => {
   }
 });
 
-// List commands
+// List commands (default + custom)
 app.get("/api/commands", (_req, res) => {
-  res.json({ ok: true, commands: DEFAULT_COMMANDS });
+  const allCommands = [...DEFAULT_COMMANDS, ...listCustomCommands()];
+  res.json({ ok: true, commands: allCommands });
 });
 
 // Run command by slug
@@ -109,6 +118,51 @@ app.post("/api/commands/:slug/run", async (req, res) => {
     console.error(err);
     res.status(500).json({ ok: false, error: err.message ?? "Unknown error" });
   }
+});
+
+// Custom command endpoints
+app.get("/api/commands/custom", (_req, res) => {
+  res.json({ ok: true, commands: listCustomCommands() });
+});
+
+app.post("/api/commands/custom", (req, res) => {
+  try {
+    const command = req.body as CustomCommand;
+
+    // Validation
+    if (!command.slug || !command.name || !command.template) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing required fields: slug, name, template"
+      });
+    }
+
+    // Prevent overriding default commands
+    const isDefaultCommand = DEFAULT_COMMANDS.some(c => c.slug === command.slug);
+    if (isDefaultCommand) {
+      return res.status(400).json({
+        ok: false,
+        error: "Cannot override default commands. Choose a different slug."
+      });
+    }
+
+    saveCustomCommand(command);
+    res.json({ ok: true, command });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: err.message ?? "Unknown error" });
+  }
+});
+
+app.delete("/api/commands/custom/:slug", (req, res) => {
+  const slug = req.params.slug;
+  const deleted = deleteCustomCommand(slug);
+
+  if (!deleted) {
+    return res.status(404).json({ ok: false, error: "Command not found" });
+  }
+
+  res.json({ ok: true });
 });
 
 // Automation endpoints

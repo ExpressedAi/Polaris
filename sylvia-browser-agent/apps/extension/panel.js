@@ -601,6 +601,164 @@ async function loadMoreResults() {
   await loadResults(false);
 }
 
+// ---------- Commands View ----------
+
+const commandForm = document.getElementById("command-form");
+const commandSlugInput = document.getElementById("command-slug");
+const commandNameInput = document.getElementById("command-name");
+const commandDescInput = document.getElementById("command-description");
+const commandTemplateInput = document.getElementById("command-template");
+const commandModelSelect = document.getElementById("command-model");
+const commandSubmitText = document.getElementById("command-submit-text");
+const commandFormTitle = document.getElementById("command-form-title");
+const btnCancelCommand = document.getElementById("btn-cancel-command");
+
+let editingCommandSlug = null;
+
+async function loadCustomCommands() {
+  try {
+    const json = await getJson("/api/commands/custom");
+    const commands = json.commands || [];
+    renderCustomCommands(commands);
+  } catch (err) {
+    console.error("Error loading custom commands:", err);
+  }
+}
+
+function renderCustomCommands(commands) {
+  const commandsList = document.getElementById("commands-list");
+  const emptyState = document.getElementById("commands-empty");
+
+  commandsList.innerHTML = "";
+
+  if (commands.length === 0) {
+    commandsList.style.display = "none";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  commandsList.style.display = "flex";
+  emptyState.style.display = "none";
+
+  commands.forEach(cmd => {
+    const card = createCommandCard(cmd);
+    commandsList.appendChild(card);
+  });
+}
+
+function createCommandCard(cmd) {
+  const card = document.createElement("div");
+  card.className = "command-card";
+
+  card.innerHTML = `
+    <div class="command-header">
+      <div class="command-info">
+        <div class="command-name">${escapeHtml(cmd.name)}</div>
+        <div class="command-slug">${escapeHtml(cmd.slug)}</div>
+        ${cmd.description ? `<div class="command-description">${escapeHtml(cmd.description)}</div>` : ""}
+      </div>
+      <div class="command-actions">
+        <button class="btn-edit" data-slug="${escapeHtml(cmd.slug)}">Edit</button>
+        <button class="btn-delete" data-slug="${escapeHtml(cmd.slug)}">Delete</button>
+      </div>
+    </div>
+  `;
+
+  // Edit button
+  card.querySelector(".btn-edit").addEventListener("click", (e) => {
+    e.stopPropagation();
+    editCommand(cmd);
+  });
+
+  // Delete button
+  card.querySelector(".btn-delete").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await deleteCommand(cmd.slug);
+  });
+
+  return card;
+}
+
+function editCommand(cmd) {
+  editingCommandSlug = cmd.slug;
+  commandFormTitle.textContent = "Edit command";
+  commandSubmitText.textContent = "Update command";
+  btnCancelCommand.style.display = "block";
+
+  commandSlugInput.value = cmd.slug;
+  commandSlugInput.disabled = true; // Can't change slug when editing
+  commandNameInput.value = cmd.name;
+  commandDescInput.value = cmd.description || "";
+  commandTemplateInput.value = cmd.template;
+  commandModelSelect.value = cmd.model || "";
+
+  // Scroll form into view
+  commandForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function resetCommandForm() {
+  editingCommandSlug = null;
+  commandFormTitle.textContent = "Create custom command";
+  commandSubmitText.textContent = "+ Create command";
+  btnCancelCommand.style.display = "none";
+  commandSlugInput.disabled = false;
+
+  commandSlugInput.value = "";
+  commandNameInput.value = "";
+  commandDescInput.value = "";
+  commandTemplateInput.value = "";
+  commandModelSelect.value = "";
+}
+
+async function saveCommand(e) {
+  e.preventDefault();
+
+  const command = {
+    slug: commandSlugInput.value.trim().toLowerCase(),
+    name: commandNameInput.value.trim(),
+    description: commandDescInput.value.trim() || undefined,
+    template: commandTemplateInput.value.trim(),
+    model: commandModelSelect.value || undefined
+  };
+
+  try {
+    const json = await postJson("/api/commands/custom", command);
+    if (!json.ok) {
+      alert(json.error || "Failed to save command");
+      return;
+    }
+
+    resetCommandForm();
+    await loadCustomCommands();
+    await loadCommands(); // Refresh the automation command dropdown
+  } catch (err) {
+    console.error("Error saving command:", err);
+    alert("Error saving command. See console for details.");
+  }
+}
+
+async function deleteCommand(slug) {
+  if (!confirm(`Delete command "${slug}"?`)) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/commands/custom/${slug}`, {
+      method: "DELETE"
+    });
+    const json = await response.json();
+
+    if (!json.ok) {
+      alert(json.error || "Failed to delete command");
+      return;
+    }
+
+    await loadCustomCommands();
+    await loadCommands(); // Refresh the automation command dropdown
+  } catch (err) {
+    console.error("Error deleting command:", err);
+    alert("Error deleting command. See console for details.");
+  }
+}
+
 // ---------- Nav / view switching ----------
 
 function initNav() {
@@ -608,6 +766,7 @@ function initNav() {
   const chatView = document.getElementById("view-chat");
   const autoView = document.getElementById("view-automations");
   const resultsView = document.getElementById("view-results");
+  const commandsView = document.getElementById("view-commands");
 
   function activate(view) {
     tabs.forEach((t) => t.classList.remove("nav-tab-active"));
@@ -618,6 +777,7 @@ function initNav() {
     chatView.classList.toggle("active", view === "chat");
     autoView.classList.toggle("active", view === "automations");
     resultsView.classList.toggle("active", view === "results");
+    commandsView.classList.toggle("active", view === "commands");
   }
 
   tabs.forEach((tab) => {
@@ -628,6 +788,8 @@ function initNav() {
         loadAutomations();
       } else if (view === "results") {
         loadResults();
+      } else if (view === "commands") {
+        loadCustomCommands();
       }
     });
   });
@@ -662,6 +824,13 @@ document
 document
   .getElementById("btn-load-more-results")
   .addEventListener("click", loadMoreResults);
+
+// Commands
+document
+  .getElementById("btn-refresh-commands")
+  .addEventListener("click", loadCustomCommands);
+commandForm.addEventListener("submit", saveCommand);
+btnCancelCommand.addEventListener("click", resetCommandForm);
 
 // Init
 setStatus("Ready to analyze this page...");
